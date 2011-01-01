@@ -1030,6 +1030,8 @@ jQuery.each(["live", "die"], function( i, name ) {
 		
 		if ( fn === false ) {
 			fn = returnFalse;
+		} else if ( !fn ) {
+		  return;
 		}
 				
 
