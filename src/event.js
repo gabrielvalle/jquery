@@ -1027,11 +1027,7 @@ jQuery.each(["live", "die"], function( i, name ) {
 			fn = data;
 			data = undefined;
 		}
-		
-		if ( fn === false ) {
-			fn = returnFalse;
-		}
-				
+	
 
 		types = (types || "").split(" ");
 
