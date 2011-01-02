@@ -641,6 +641,40 @@ test("unbind(eventObject)", function() {
 	assert( 0 );
 });
 
+// Ticket #6514
+test("mouseenter/mouseleave", function() {
+	var times = 0,
+		handler = function( event ) { ++times; };
+
+	var $p = jQuery("#firstp");
+	
+	//	Bind
+	$p.bind("mouseenter", handler );
+	$p.bind("mouseleave", handler );
+
+	//	Live
+	$p.live("mouseenter", handler );
+	$p.live("mouseleave", handler );	
+
+	//	Trigger them all
+	$p.trigger("mouseenter");
+	$p.trigger("mouseleave");	
+	
+	//	Unbind
+	$p.unbind("mouseenter" );
+	$p.unbind("mouseleave" );
+	
+	//	Die
+	$p.die("mouseenter");
+	$p.die("mouseleave");	
+
+	//	Should no nothing
+	$p.trigger("mouseenter");
+	$p.trigger("mouseleave");	
+
+	equals( times, 4, "mouseenter/mouseleave handlers fired distinctly by bind and live" );
+});
+
 test("hover()", function() {
 	var times = 0,
 		handler1 = function( event ) { ++times; },
