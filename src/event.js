@@ -1048,11 +1048,9 @@ jQuery.each(["live", "die"], function( i, name ) {
 
 			if ( liveMap[ type ] ) {
 				types.push( liveMap[ type ] + namespaces );
-				type = type + namespaces;
-
-			} else {
-				type = (liveMap[ type ] || type) + namespaces;
 			}
+			
+			type = type + namespaces;
 
 			if ( name === "live" ) {
 				// bind live handler
