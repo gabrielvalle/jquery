@@ -1051,7 +1051,7 @@ jQuery.each(["live", "die"], function( i, name ) {
 				type = type + namespaces;
 
 			} else {
-				type = type + namespaces;
+				type = (liveMap[ type ] || type) + namespaces;
 			}
 
 			if ( name === "live" ) {
