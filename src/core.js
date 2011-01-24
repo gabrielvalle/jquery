@@ -5,7 +5,8 @@ var jQuery = function( selector, context ) {
 		// The jQuery object is actually just the init constructor 'enhanced'
 		return new jQuery.fn.init( selector, context, rootjQuery );
 	},
-
+    something = true, 
+    
 	// Map over jQuery in case of overwrite
 	_jQuery = window.jQuery,
 
