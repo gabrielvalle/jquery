@@ -67,6 +67,10 @@ var jQuery = function( selector, context ) {
 		invert: "promise"
 	},
 
+	// Store refs for fast access
+	docHead = document.head || document.getElementsByTagName( "head" )[ 0 ] || document.documentElement,
+	docBody = document.body || document.getElementsByTagName( "body" )[ 0 ],
+
 	// The ready event handler
 	DOMContentLoaded,
 
@@ -99,9 +103,9 @@ jQuery.fn = jQuery.prototype = {
 		}
 
 		// The body element only exists once, optimize finding it
-		if ( selector === "body" && !context && document.body ) {
+		if ( selector === "body" && !context && docBody ) {
 			this.context = document;
-			this[0] = document.body;
+			this[0] = docBody;
 			this.selector = "body";
 			this.length = 1;
 			return this;
@@ -368,8 +372,8 @@ jQuery.extend = jQuery.fn.extend = function() {
 jQuery.extend({
 
 	doc: {
-		head: document.head || document.getElementsByTagName( "head" )[ 0 ] || document.documentElement, 
-		body: document.body || document.getElementsByTagName( "body" )[ 0 ] 	
+		head: docHead, 
+		body: docBody
 	},
 
 	noConflict: function( deep ) {
@@ -399,7 +403,7 @@ jQuery.extend({
 		// Make sure that the DOM is not already loaded
 		if ( !jQuery.readyWait || (wait !== true && !jQuery.isReady) ) {
 			// Make sure body exists, at least, in case IE gets a little overzealous (ticket #5443).
-			if ( !document.body ) {
+			if ( !docBody ) {
 				return setTimeout( jQuery.ready, 1 );
 			}
 
