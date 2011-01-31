@@ -366,6 +366,12 @@ jQuery.extend = jQuery.fn.extend = function() {
 };
 
 jQuery.extend({
+
+	doc: {
+		head: document.head || document.getElementsByTagName( "head" )[ 0 ] || document.documentElement, 
+		body: document.body || document.getElementsByTagName( "body" )[ 0 ] 	
+	},
+
 	noConflict: function( deep ) {
 		window.$ = _$;
 
