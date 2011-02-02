@@ -385,6 +385,12 @@ jQuery.extend({
 
 	// Handle when the DOM is ready
 	ready: function( wait ) {
+
+		// Fixes #8141
+		if ( jQuery.isReady && jQuery.readyWait === 0 ) {
+			return;
+		}
+
 		// A third-party is pushing the ready event forwards
 		if ( wait === true ) {
 			jQuery.readyWait--;
