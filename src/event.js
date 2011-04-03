@@ -570,10 +570,34 @@ jQuery.removeEvent = document.removeEventListener ?
 		}
 	};
 
-jQuery.Event = function( src ) {
+jQuery.Event = function( src, props ) {
 	// Allow instantiation without the 'new' keyword
 	if ( !this.preventDefault ) {
-		return new jQuery.Event( src );
+		return new jQuery.Event( src, props );
+	}
+
+	// Event Properties
+	if ( props ) {
+
+		// Store local reference to reduce property lookups
+		var eventProps = jQuery.event.props;
+
+		// Enumerate the provided properties
+		for ( var prop in props ) {
+
+			// If we have no known record of the property
+			if ( jQuery.inArray( prop, eventProps ) === -1 ) {
+
+				// Add this property to stored event props to make
+				// it available to all future events
+				eventProps.push( prop );
+			}
+
+			this[ prop ] = props[ prop ];
+		}
+
+		//	Update normalized event props
+		jQuery.event.props = eventProps.sort();
 	}
 
 	// Event object
@@ -868,10 +892,10 @@ function trigger( type, elem, args ) {
 // Create "bubbling" focus and blur events
 if ( document.addEventListener ) {
 	jQuery.each({ focus: "focusin", blur: "focusout" }, function( orig, fix ) {
-	
+
 		// Attach a single capturing handler while someone wants focusin/focusout
 		var attaches = 0;
-		
+
 		jQuery.event.special[ fix ] = {
 			setup: function() {
 				if ( attaches++ === 0 ) {
@@ -1184,3 +1208,4 @@ jQuery.each( ("blur focus focusin focusout load resize scroll unload click dblcl
 });
 
 })( jQuery );
+

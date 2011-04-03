@@ -685,7 +685,6 @@ test("hover()", function() {
 
 test("mouseover triggers mouseenter", function() {
 	expect(1);
-	
 	var count = 0,
 		elem = jQuery("<a />");
 	elem.mouseenter(function () {
@@ -693,7 +692,6 @@ test("mouseover triggers mouseenter", function() {
 	});
 	elem.trigger('mouseover');
 	equals(count, 1, "make sure mouseover triggers a mouseenter" );
-	
 	elem.remove();
 });
 
@@ -928,6 +926,42 @@ test("trigger(eventObject, [data], [fn])", function() {
 
 	$child.unbind();
 	$parent.unbind().remove();
+});
+
+test("jQuery.Event( 'type' [, { /* props */ } ])", function() {
+
+	expect(12);
+
+	var event = jQuery.Event( "drop", { dataTransfer: true, otherProp: "aPropVal" }),
+			handler = function( event ) {
+				ok( "dataTransfer" in event, "Special property 'dataTransfer' exists" );
+				ok( "otherProp" in event, "Special property 'otherProp' exists" );
+			};
+
+	// Supports jQuery.Event implementation
+	equal( event.type, "drop", "Verify type" );
+	ok( "dataTransfer" in event, "Special 'dataTransfer' property exists" );
+	ok( "otherProp" in event, "Special property 'otherProp' exists" );
+
+	equals( event.isDefaultPrevented(), false, "Verify isDefaultPrevented" );
+	equals( event.isPropagationStopped(), false, "Verify isPropagationStopped" );
+	equals( event.isImmediatePropagationStopped(), false, "Verify isImmediatePropagationStopped" );
+
+	event.preventDefault();
+	equals( event.isDefaultPrevented(), true, "Verify isDefaultPrevented" );
+	event.stopPropagation();
+	equals( event.isPropagationStopped(), true, "Verify isPropagationStopped" );
+
+	event.isPropagationStopped = function(){ return false };
+	event.stopImmediatePropagation();
+	equals( event.isPropagationStopped(), true, "Verify isPropagationStopped" );
+	equals( event.isImmediatePropagationStopped(), true, "Verify isPropagationStopped" );
+
+
+	jQuery("body").bind( "drop", handler ).trigger( event );
+
+	jQuery("body").unbind( "drop" );
+
 });
 
 test("jQuery.Event.currentTarget", function(){
@@ -1982,8 +2016,7 @@ test("window resize", function() {
 
 test("focusin bubbles", function() {
 	expect(5);
-	
-	var input = jQuery( '<input type="text" />' ).prependTo( "body" ), 
+	var input = jQuery( '<input type="text" />' ).prependTo( "body" ),
 		order = 0;
 
 	jQuery( "body" ).bind( "focusin.focusinBubblesTest", function(){
@@ -1996,12 +2029,10 @@ test("focusin bubbles", function() {
 
 	// DOM focus method
 	input[0].focus();
-	
 	// To make the next focus test work, we need to take focus off the input.
 	// This will fire another focusin event, so set order to reflect that.
 	order = 1;
 	jQuery("#text1")[0].focus();
-	
 	// jQuery trigger, which calls DOM focus
 	order = 0;
 	input.trigger( "focus" );
@@ -2027,3 +2058,4 @@ test("event properties", function() {
 	}).click();
 });
 */
+
