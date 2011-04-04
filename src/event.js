@@ -483,7 +483,7 @@ jQuery.event = {
 		if ( adopted ) {
 			for ( prop in adopted ) {
 				// Give precendence specifically overridden properties
-				event[ prop ] = adopted[ prop ] || originalEvent[ prop ];
+				event[ prop ] = originalEvent[ prop ] || adopted[ prop ];
 			}
 		}
 

@@ -930,7 +930,16 @@ test("trigger(eventObject, [data], [fn])", function() {
 
 test("jQuery.Event( 'type' [, { /* props */ } ])", function() {
 
-	expect(18);
+	expect(19);
+
+	var keyEvent = jQuery.Event( "keydown", { keyCode: 64 }),
+			keyHandler = function( event ) {
+				ok( event.keyCode === 64, "Special property event.keyCode === 64" );
+			};
+
+	jQuery("body").bind( "keydown", keyHandler ).trigger( keyEvent );
+
+
 
 	var dropEventA = jQuery.Event( "drop", { dataTransfer: undefined, otherProp: "aPropVal" }),
 			dropEventB = jQuery.Event( "drop" ),
@@ -969,6 +978,7 @@ test("jQuery.Event( 'type' [, { /* props */ } ])", function() {
 
 	jQuery("#ap").bind( "drop", dropHandler ).trigger( "drop", { "triggeredBy": "event type ( string )" } );
 
+	jQuery("body").unbind( "keydown" );
 	jQuery("#ap").unbind( "drop" );
 	jQuery("#foo").unbind( "drop" );
 	jQuery("#foo").unbind( "click" );
