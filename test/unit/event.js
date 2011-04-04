@@ -930,38 +930,48 @@ test("trigger(eventObject, [data], [fn])", function() {
 
 test("jQuery.Event( 'type' [, { /* props */ } ])", function() {
 
-	expect(12);
+	expect(18);
 
-	var event = jQuery.Event( "drop", { dataTransfer: true, otherProp: "aPropVal" }),
-			handler = function( event ) {
-				ok( "dataTransfer" in event, "Special property 'dataTransfer' exists" );
-				ok( "otherProp" in event, "Special property 'otherProp' exists" );
+	var dropEventA = jQuery.Event( "drop", { dataTransfer: undefined, otherProp: "aPropVal" }),
+			dropEventB = jQuery.Event( "drop" ),
+			dropHandler = function( event, data ) {
+				ok( "dataTransfer" in event, "Special property 'dataTransfer' exists on 'drop' event, when triggered by " + data.triggeredBy );
+				ok( "otherProp" in event, "Special property 'otherProp' exists on 'drop' event, when triggered by " + data.triggeredBy );
+			},
+			clickEvent = jQuery.Event( "click" ),
+			clickHandler = function( event ) {
+				ok( !("dataTransfer" in event), "Special property 'dataTransfer' DOES NOT exist on 'click' event" );
+				ok( !("otherProp" in event), "Special property 'otherProp' DOES NOT exists on 'click' event" );
 			};
 
 	// Supports jQuery.Event implementation
-	equal( event.type, "drop", "Verify type" );
-	ok( "dataTransfer" in event, "Special 'dataTransfer' property exists" );
-	ok( "otherProp" in event, "Special property 'otherProp' exists" );
+	equal( dropEventA.type, "drop", "Verify type" );
+	ok( "dataTransfer" in dropEventA, "Special 'dataTransfer' property exists on 'drop' event" );
+	ok( "otherProp" in dropEventA, "Special property 'otherProp' exists on 'drop' event" );
 
-	equals( event.isDefaultPrevented(), false, "Verify isDefaultPrevented" );
-	equals( event.isPropagationStopped(), false, "Verify isPropagationStopped" );
-	equals( event.isImmediatePropagationStopped(), false, "Verify isImmediatePropagationStopped" );
+	equals( dropEventA.isDefaultPrevented(), false, "Verify isDefaultPrevented" );
+	equals( dropEventA.isPropagationStopped(), false, "Verify isPropagationStopped" );
+	equals( dropEventA.isImmediatePropagationStopped(), false, "Verify isImmediatePropagationStopped" );
 
-	event.preventDefault();
-	equals( event.isDefaultPrevented(), true, "Verify isDefaultPrevented" );
-	event.stopPropagation();
-	equals( event.isPropagationStopped(), true, "Verify isPropagationStopped" );
+	dropEventA.preventDefault();
+	equals( dropEventA.isDefaultPrevented(), true, "Verify isDefaultPrevented" );
+	dropEventA.stopPropagation();
+	equals( dropEventA.isPropagationStopped(), true, "Verify isPropagationStopped" );
 
-	event.isPropagationStopped = function(){ return false };
-	event.stopImmediatePropagation();
-	equals( event.isPropagationStopped(), true, "Verify isPropagationStopped" );
-	equals( event.isImmediatePropagationStopped(), true, "Verify isPropagationStopped" );
+	dropEventA.isPropagationStopped = function(){ return false };
+	dropEventA.stopImmediatePropagation();
+	equals( dropEventA.isPropagationStopped(), true, "Verify isPropagationStopped" );
+	equals( dropEventA.isImmediatePropagationStopped(), true, "Verify isPropagationStopped" );
 
+	jQuery("#foo").bind( "drop", dropHandler ).trigger( dropEventA, { "triggeredBy": "event object" });
+	jQuery("#foo").bind( "drop", dropHandler ).trigger( dropEventA, { "triggeredBy": "event object" } );
+	jQuery("#foo").bind( "click", clickHandler).trigger( clickEvent );
 
-	jQuery("body").bind( "drop", handler ).trigger( event );
+	jQuery("#ap").bind( "drop", dropHandler ).trigger( "drop", { "triggeredBy": "event type ( string )" } );
 
-	jQuery("body").unbind( "drop" );
-
+	jQuery("#ap").unbind( "drop" );
+	jQuery("#foo").unbind( "drop" );
+	jQuery("#foo").unbind( "click" );
 });
 
 test("jQuery.Event.currentTarget", function(){

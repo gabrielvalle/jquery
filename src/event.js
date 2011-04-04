@@ -288,9 +288,9 @@ jQuery.event = {
 				// jQuery.Event object
 				event[ jQuery.expando ] ? event :
 				// Object literal
-				jQuery.extend( jQuery.Event(type), event ) :
+				jQuery.extend( jQuery.Event( type, jQuery.event.adopted[ type ] ), event ) :
 				// Just the event type (string)
-				jQuery.Event(type);
+				jQuery.Event( type, jQuery.event.adopted[ type ] );
 
 			if ( type.indexOf("!") >= 0 ) {
 				event.type = type = type.slice(0, -1);
@@ -457,6 +457,9 @@ jQuery.event = {
 
 	props: "altKey attrChange attrName bubbles button cancelable charCode clientX clientY ctrlKey currentTarget data detail eventPhase fromElement handler keyCode layerX layerY metaKey newValue offsetX offsetY pageX pageY prevValue relatedNode relatedTarget screenX screenY shiftKey srcElement target toElement view wheelDelta which".split(" "),
 
+	// jQuery.Event( type, props ) registration
+	adopted: {},
+
 	fix: function( event ) {
 		if ( event[ jQuery.expando ] ) {
 			return event;
@@ -464,12 +467,24 @@ jQuery.event = {
 
 		// store a copy of the original event object
 		// and "clone" to set read-only properties
-		var originalEvent = event;
+		var originalEvent = event,
+				adopted, prop, i;
+
 		event = jQuery.Event( originalEvent );
 
-		for ( var i = this.props.length, prop; i; ) {
+		// Check for adoptable properties
+		adopted = this.adopted[ event.type ] || false;
+
+		for ( i = this.props.length; i; ) {
 			prop = this.props[ --i ];
 			event[ prop ] = originalEvent[ prop ];
+		}
+
+		if ( adopted ) {
+			for ( prop in adopted ) {
+				// Give precendence specifically overridden properties
+				event[ prop ] = adopted[ prop ] || originalEvent[ prop ];
+			}
 		}
 
 		// Fix target property, if necessary
@@ -576,28 +591,33 @@ jQuery.Event = function( src, props ) {
 		return new jQuery.Event( src, props );
 	}
 
+	var adopted, srcType, prop;
+
 	// Event Properties
 	if ( props ) {
 
-		// Store local reference to reduce property lookups
-		var eventProps = jQuery.event.props;
-
+		srcType = ( jQuery.type( src ) === "string" && src ) || src.type;
+		adopted = jQuery.event.adopted[ srcType ] || {};
 		// Enumerate the provided properties
-		for ( var prop in props ) {
-
-			// If we have no known record of the property
-			if ( jQuery.inArray( prop, eventProps ) === -1 ) {
-
-				// Add this property to stored event props to make
-				// it available to all future events
-				eventProps.push( prop );
-			}
-
-			this[ prop ] = props[ prop ];
+		for ( prop in props ) {
+			// Add this property to adopted event props to make
+			// it available to all future events
+			adopted[ prop ] = props[ prop ];
 		}
 
-		//	Update normalized event props
-		jQuery.event.props = eventProps.sort();
+		// Update adopted properties for this type of event
+		jQuery.event.adopted[ srcType ] = adopted;
+	}
+
+	// Check if adopted properties have been previously stored
+	adopted = adopted || jQuery.event.adopted[ srcType ];
+
+	// If this event has adoptable properties, apply either the defaults or
+	// the matching property's value on the src event object
+	if ( adopted ) {
+		for ( prop in adopted ) {
+			this[ prop ] = adopted[ prop ] || src[ prop ] || undefined;
+		}
 	}
 
 	// Event object
