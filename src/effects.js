@@ -12,7 +12,10 @@ var elemdisplay = {},
 		// opacity animations
 		[ "opacity" ]
 	],
-	requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestionAnimationFrame;
+	requestAnimationFrame =
+		window.webkitRequestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.oRequestAnimationFrame;
 
 jQuery.fn.extend({
 	show: function( speed, easing, callback ) {
@@ -539,3 +542,4 @@ function defaultDisplay( nodeName ) {
 }
 
 })( jQuery );
+
