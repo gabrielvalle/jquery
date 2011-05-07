@@ -1,6 +1,9 @@
 (function( jQuery ) {
 
-var elemdisplay = {},
+var elemdisplay = {
+    html: "block",
+    body: "block"
+  },
 	iframe, iframeDoc,
 	rfxtypes = /^(?:toggle|show|hide)$/,
 	rfxnum = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
