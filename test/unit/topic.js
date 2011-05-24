@@ -66,3 +66,53 @@ test( "jQuery.Topic - Helpers", function() {
 	jQuery.unsubscribe( subscription );
 	jQuery.publish( "test" );
 });
+
+test( "jQuery.Topic - Self Unsubscribing Callbacks", function() {
+
+	var args = [ "string", "", 1, 0, true, false, null, undefined, {}, [], function() { return "win!" } ], 
+		tests = [ "string", "empty", "one", "zero", "true", "false", "null", "undefined", "object", "array", "function" ], 
+		counters = {};
+
+	expect( args.length * 3 );
+
+	function callback() {
+
+		ok( true, "Topic: '" + arguments[0] + "' has published " );
+
+		counters[arguments[0]]++;
+
+		if ( counters[arguments[0]] === 1 ) {
+
+			// unsubscribe this topic - CRUCIAL
+			jQuery.unsubscribe( this );
+
+			arguments[ 2 ].call( this, arguments[0], arguments[1], function( id, arg, idx ) {
+
+				this.topic.publish();
+
+				equal( counters[id], 1, "Callback for '"+ id +"' executed once; became unsubscribed; an attempted second publish was squashed" );
+				same( arg, args[idx], "Argument '"+ id +"' survived inception" );
+			});
+		}
+	}
+
+	jQuery.each( args, function( idx, val ) {
+
+		counters[ tests[idx] ] = 0;
+
+		var subscription = jQuery.subscribe( tests[ idx ], function() {
+
+			callback.apply( subscription, 
+				[ 
+					tests[ idx ], 
+					val, 
+					function( arg, id, lastCall ) {
+						lastCall.call( this, arg, id, idx );
+					}
+				] 
+			);
+		});
+
+		subscription.topic.publish();
+	});
+});
