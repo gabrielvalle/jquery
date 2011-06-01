@@ -517,8 +517,17 @@ test("Removing data from &lt;html&gt; will throw exceptions in IE <9", function(
 
 	html.data("foo", "bar");
 
+	// directly test the issue reported:
+	if ( html[0].removeAttribute ) {
+		console.log( "removeattribute on html element" );
+	}
+
+	// jQuery("html").removeData("foo") will route a call to 
+	// jQuery.removeData( htmlElement, "foo" ) where the offending 
+	// `else if ( elem.removeAttribute ) {` resides,
+	// which _should_ throw an exception 
 	try {
-		jQuery.removeData( html[0], "foo");
+		html.removeData("foo");
 		ok(true, "no exception thrown");
 	} catch (e) {
 		ok(false, "exception thrown");
