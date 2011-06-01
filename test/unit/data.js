@@ -508,3 +508,19 @@ test("jQuery.data should follow html5 specification regarding camel casing", fun
 
 	div.remove();
 });
+
+test("Removing data from &lt;html&gt; will throw exceptions in IE <9", function() {
+
+	expect(1);
+
+	var html = jQuery("html");
+
+	html.data("foo", "bar");
+
+	try {
+		jQuery.removeData( html[0], "foo");
+		ok(true, "no exception thrown");
+	} catch (e) {
+		ok(false, "exception thrown");
+	}
+});
