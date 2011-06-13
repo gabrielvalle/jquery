@@ -424,6 +424,10 @@ jQuery.event = {
 			// Triggered event must 1) be non-exclusive and have no namespace, or
 			// 2) have namespace(s) a subset or equal to those in the bound event.
 			if ( run_all || event.namespace_re.test( handleObj.namespace ) ) {
+			
+//if handleObj.selector check for a match???
+//is it faster/better to collect all lives at once like liveHandler does???
+
 				// Pass in a reference to the handler function itself
 				// So that we can later remove it
 				event.handler = handleObj.handler;
@@ -1017,6 +1021,42 @@ var liveMap = {
 	blur: "focusout",
 	mouseenter: "mouseover",
 	mouseleave: "mouseout"
+};
+
+jQuery.fn.on = function( events, selector, data, fn ) {
+	
+	// Parameter hockey; selector and data are optional
+	if ( typeof selector !== "string" ) {
+//could we allow a func for selector, for perf reasons?
+//seems so if args.length>2 and last arg is fn
+		fn = data;
+		data = selector;
+		selector = undefined;
+	}
+	if ( data === false || jQuery.isFunction( data ) ) {
+		fn = data || returnFalse;
+		data = undefined;
+	}
+
+	// Events can be a string/array of event names, or a map of event names/fns
+	var type = jQuery.type( events );
+	if ( type === "object" ) {
+		for ( var event in events ) {
+			jQuery.fn.on( event, selector, data, events[event] );
+		}
+		return;
+	}
+
+	if ( type === "string" ) {
+		events = events.split(" ");
+	}
+	for ( var i = 0; i < events.length; i++ ) {
+		return this.each(function() {
+//TODO: add selector arg here
+			jQuery.event.add( events[i], selector, fn, this );
+		});
+	}
+	
 };
 
 jQuery.each(["live", "die"], function( i, name ) {
