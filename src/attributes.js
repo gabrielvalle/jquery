@@ -37,12 +37,12 @@ jQuery.fn.extend({
 	},
 
 	addClass: function( value ) {
-		var classNames, i, l, elem, setClass, c, cl;
+		var classNames, i, l, elem,
+			setClass, c, cl;
 
 		if ( jQuery.isFunction( value ) ) {
 			return this.each(function( j ) {
-				var self = jQuery( this );
-				self.addClass( value.call(this, j, self.attr("class") || "") );
+				jQuery( this ).addClass( value.call(this, j, this.className) );
 			});
 		}
 
@@ -57,11 +57,11 @@ jQuery.fn.extend({
 						elem.className = value;
 
 					} else {
-						setClass = elem.className;
+						setClass = " " + elem.className + " ";
 
 						for ( c = 0, cl = classNames.length; c < cl; c++ ) {
-							if ( !~setClass.indexOf(classNames[ c ]) ) {
-								setClass += " " + classNames[ c ];
+							if ( !~setClass.indexOf( " " + classNames[ c ] + " " ) ) {
+								setClass += classNames[ c ] + " ";
 							}
 						}
 						elem.className = jQuery.trim( setClass );
@@ -78,8 +78,7 @@ jQuery.fn.extend({
 
 		if ( jQuery.isFunction( value ) ) {
 			return this.each(function( j ) {
-				var self = jQuery( this );
-				self.removeClass( value.call(this, j, self.attr("class")) );
+				jQuery( this ).removeClass( value.call(this, j, this.className) );
 			});
 		}
 
@@ -112,9 +111,8 @@ jQuery.fn.extend({
 			isBool = typeof stateVal === "boolean";
 
 		if ( jQuery.isFunction( value ) ) {
-			return this.each(function(i) {
-				var self = jQuery(this);
-				self.toggleClass( value.call(this, i, self.attr("class"), stateVal), stateVal );
+			return this.each(function( i ) {
+				jQuery( this ).toggleClass( value.call(this, i, this.className, stateVal), stateVal );
 			});
 		}
 
@@ -320,21 +318,23 @@ jQuery.extend({
 			notxml = nType !== 1 || !jQuery.isXMLDoc( elem );
 
 		// Normalize the name if needed
-		name = notxml && jQuery.attrFix[ name ] || name;
+		if ( notxml ) {
+			name = jQuery.attrFix[ name ] || name;
 
-		hooks = jQuery.attrHooks[ name ];
+			hooks = jQuery.attrHooks[ name ];
 
-		if ( !hooks ) {
-			// Use boolHook for boolean attributes
-			if ( rboolean.test( name ) ) {
+			if ( !hooks ) {
+				// Use boolHook for boolean attributes
+				if ( rboolean.test( name ) ) {
 
-				hooks = boolHook;
+					hooks = boolHook;
 
-			// Use formHook for forms and if the name contains certain characters
-			} else if ( formHook && name !== "className" &&
-				(jQuery.nodeName( elem, "form" ) || rinvalidChar.test( name )) ) {
+				// Use formHook for forms and if the name contains certain characters
+				} else if ( formHook && name !== "className" &&
+					(jQuery.nodeName( elem, "form" ) || rinvalidChar.test( name )) ) {
 
-				hooks = formHook;
+					hooks = formHook;
+				}
 			}
 		}
 
@@ -465,10 +465,11 @@ jQuery.extend({
 		var ret, hooks,
 			notxml = nType !== 1 || !jQuery.isXMLDoc( elem );
 
-		// Try to normalize/fix the name
-		name = notxml && jQuery.propFix[ name ] || name;
-		
-		hooks = jQuery.propHooks[ name ];
+		if ( notxml ) {
+			// Fix name and attach hooks
+			name = jQuery.propFix[ name ] || name;
+			hooks = jQuery.propHooks[ name ];
+		}
 
 		if ( value !== undefined ) {
 			if ( hooks && "set" in hooks && (ret = hooks.set( elem, value, name )) !== undefined ) {
