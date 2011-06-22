@@ -525,3 +525,16 @@ test("jQuery.data should not miss data with preset hyphenated property names", f
 		equal( div.data(k), k, "data with property '"+k+"' was correctly found");
 	});
 });
+
+test("jQuery.data is not broken by numbers #9318", function() {
+
+	//expect(2);
+
+	var div = jQuery("<div id='myObject' data-foo='a' data-foo-12='b' data-12-bar-baz='c'></div>")
+						.appendTo("#qunit-fixture"), 
+			data = div.data();
+
+	jQuery.each( [ "data-foo", "data-foo-12", "data-12-bar-baz" ], function( i, val ) {
+		console.log(  i, val, data );	
+	});
+});
