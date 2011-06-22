@@ -528,13 +528,13 @@ test("jQuery.data should not miss data with preset hyphenated property names", f
 
 test("jQuery.data is not broken by numbers #9318", function() {
 
-	//expect(2);
+	expect(3);
 
-	var div = jQuery("<div id='myObject' data-foo='a' data-foo-12='b' data-12-bar-baz='c'></div>")
+	var div = jQuery("<div data-foo='a' data-foo-12='b' data-12-bar-baz='c'></div>")
 						.appendTo("#qunit-fixture"), 
 			data = div.data();
 
-	jQuery.each( [ "data-foo", "data-foo-12", "data-12-bar-baz" ], function( i, val ) {
-		console.log(  i, val, data );	
+	jQuery.each( { "foo": "a", "foo-12": "b", "12-bar-baz": "c" }, function( key, val ) {
+		equal( div.data( key ), val, key + " found and has expected value" );	
 	});
 });

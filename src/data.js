@@ -227,16 +227,11 @@ jQuery.fn.extend({
 				data = jQuery.data( this[0] );
 
 				if ( this[0].nodeType === 1 ) {
-					var attr = this[0].attributes, 
-						name;
-
+			    var attr = this[0].attributes, name;
 					for ( var i = 0, l = attr.length; i < l; i++ ) {
 						name = attr[i].name;
 
 						if ( name.indexOf( "data-" ) === 0 ) {
-
-							console.log( name );
-
 							name = jQuery.camelCase( name.substring(5) );
 
 							dataAttr( this[0], name, data[ name ] );
@@ -244,8 +239,6 @@ jQuery.fn.extend({
 					}
 				}
 			}
-
-			console.log( "returning" );
 
 			return data;
 
@@ -264,7 +257,7 @@ jQuery.fn.extend({
 			// Try to fetch any internally stored data first
 			if ( data === undefined && this.length ) {
 				data = jQuery.data( this[0], key );
-				data = dataAttr( this[0], key, data ).data;
+				data = dataAttr( this[0], key, data );
 			}
 
 			return data === undefined && parts[1] ?
@@ -294,11 +287,10 @@ function dataAttr( elem, key, data ) {
 	// If nothing was found internally, try to fetch any
 	// data from the HTML5 data-* attribute
 	if ( data === undefined && elem.nodeType === 1 ) {
-
 		var name = "data-" + key.replace( rmultiDash, "$1-$2" ).toLowerCase();
 
 		// If name has digits, but not at the end
-		if ( /\d+/.exec( name ) && !/\d+$/.exec( name ) ) {
+		if ( /\d+/.test( name ) && !/\d+$/.test( name ) ) {
 			// Numbers in the middle of the attribute need special handling
 			name = name.replace(/(\d+)/, "$1-");
 		}
@@ -323,10 +315,7 @@ function dataAttr( elem, key, data ) {
 		}
 	}
 
-	return {
-		key: name.replace("data-", ""),
-		data: data
-	};
+	return data;
 }
 
 // TODO: This is a hack for 1.5 ONLY to allow objects with a single toJSON
