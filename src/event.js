@@ -407,46 +407,70 @@ jQuery.event = {
 	},
 
 	handle: function( event ) {
+
+		function dispatch( event, handlers, args ) {
+			// Snapshot the handlers list since a called handler may add/remove events.
+			var run_all = !event.exclusive && !event.namespace;
+			handlers = handlers.slice(0);
+
+			for ( var j = 0, l = handlers.length; j < l && !event.isImmediatePropagationStopped(); j++ ) {
+				var handleObj = handlers[ j ];
+
+				// Triggered event must 1) be non-exclusive and have no namespace, or
+				// 2) have namespace(s) a subset or equal to those in the bound event.
+				if ( run_all || event.namespace_re.test( handleObj.namespace ) ) {
+				
+					// Pass in a reference to the handler function itself
+					// So that we can later remove it
+					event.handler = handleObj.handler;
+					event.data = handleObj.data;
+					event.handleObj = handleObj;
+
+					var ret = handleObj.handler.apply( this, args );
+
+					if ( ret !== undefined ) {
+						event.result = ret;
+						if ( ret === false ) {
+							event.preventDefault();
+							event.stopPropagation();
+						}
+					}
+				}
+			}
+		}
+		function quickMatch( elem, m ) {
+			return !(
+				m[1] && elem.tagName != m[1] || 
+				m[2] && elem.id != m[2] || 
+				m[3] && (new RegExp( "\\b" + m[3] + "\\b" )).test(elem.className) ||
+				m[4] && elem.getAttribute(m[4]) == m[5]
+			);
+		}
+
 		event = jQuery.event.fix( event || window.event );
-		// Snapshot the handlers list since a called handler may add/remove events.
-		var handlers = ((jQuery._data( this, "events" ) || {})[ event.type ] || []).slice(0),
-			run_all = !event.exclusive && !event.namespace,
+		var handlers = (jQuery._data( this, "events" ) || {})[ event.type ] || [],
 			args = Array.prototype.slice.call( arguments, 0 );
 
-		// Use the fix-ed Event rather than the (read-only) native event
+		// Use the fix-ed jQuery.Event rather than the (read-only) native event
 		args[0] = event;
 		event.currentTarget = this;
 
-		for ( var j = 0, l = handlers.length; j < l; j++ ) {
-			var handleObj = handlers[ j ];
-
-			// Triggered event must 1) be non-exclusive and have no namespace, or
-			// 2) have namespace(s) a subset or equal to those in the bound event.
-			if ( run_all || event.namespace_re.test( handleObj.namespace ) ) {
-			
-//if handleObj.selector check for a match???
-//is it faster/better to collect all lives at once like liveHandler does???
-
-				// Pass in a reference to the handler function itself
-				// So that we can later remove it
-				event.handler = handleObj.handler;
-				event.data = handleObj.data;
-				event.handleObj = handleObj;
-
-				var ret = handleObj.handler.apply( this, args );
-
-				if ( ret !== undefined ) {
-					event.result = ret;
-					if ( ret === false ) {
-						event.preventDefault();
-						event.stopPropagation();
+		// Run delegates first; they may want to stop propagation beneath us
+		var delegates = handlers.delegates,
+			cur = event.target;
+		if ( delegates ) {
+			do {
+				for ( var selector in delegates ) {
+					if ( jQuery( cur ).is( selector ) ) {
+						dispatch( event, delegates[selector], args );
 					}
 				}
+			} while ( !event.isPropagationStopped() && (cur = cur.parentNode) != event.currentTarget );
+		}
 
-				if ( event.isImmediatePropagationStopped() ) {
-					break;
-				}
-			}
+		// Run directly-bound events if no delegates stopped propagation below our level
+		if ( handlers.length && !delegates || cur == event.currentTarget ) {
+			dispatch( event, handlers, args );
 		}
 		return event.result;
 	},
@@ -1020,7 +1044,7 @@ jQuery.fn.on = function( events, selector, data, fn ) {
 	// Parameter hockey; selector and data are optional
 	if ( typeof selector !== "string" ) {
 //could we allow a func for selector, for perf reasons?
-//seems so if args.length>2 and last arg is fn
+//seems so if args.length>2 and last arg is fn, but need a guid for selector fn
 		fn = data;
 		data = selector;
 		selector = undefined;
@@ -1038,17 +1062,41 @@ jQuery.fn.on = function( events, selector, data, fn ) {
 		}
 		return;
 	}
-
 	if ( type === "string" ) {
 		events = events.split(" ");
 	}
 	for ( var i = 0; i < events.length; i++ ) {
-		return this.each(function() {
-//TODO: add selector arg here
-			jQuery.event.add( events[i], selector, fn, this );
-		});
+
 	}
 	
+};
+jQuery.fn.off = function( events, selector, fn ) {
+
+	// Parameter hockey; selector and fn are optional
+	if ( typeof selector !== "string" ) {
+		fn = selector;
+		selector = undefined;
+	}
+	if ( fn === false ) {
+		fn = returnFalse;
+	}
+
+	// Events can be a string/array of event names, or a map of event names/fns
+	var type = jQuery.type( events ),
+		event;
+	if ( type === "object" ) {
+		for ( event in events ) {
+			jQuery.fn.off( event, selector, events[event] );
+		}
+		return;
+	}
+	if ( type === "string" ) {
+		events = events.split(" ");
+	}
+	for ( var i = 0; i < events.length; i++ ) {
+		event = events[i];
+		
+	}
 };
 
 jQuery.each(["live", "die"], function( i, name ) {
