@@ -408,10 +408,13 @@ jQuery.event = {
 
 	handle: function( event ) {
 
-		function dispatch( event, handlers, args ) {
-			// Snapshot the handlers list since a called handler may add/remove events.
+		function dispatch( target, event, handlers, args ) {
+
 			var run_all = !event.exclusive && !event.namespace;
+
+			// Snapshot the handlers list since a called handler may add/remove events.
 			handlers = handlers.slice(0);
+			event.currentTarget = target;
 
 			for ( var j = 0, l = handlers.length; j < l && !event.isImmediatePropagationStopped(); j++ ) {
 				var handleObj = handlers[ j ];
@@ -426,7 +429,7 @@ jQuery.event = {
 					event.data = handleObj.data;
 					event.handleObj = handleObj;
 
-					var ret = handleObj.handler.apply( this, args );
+					var ret = handleObj.handler.apply( target, args );
 
 					if ( ret !== undefined ) {
 						event.result = ret;
@@ -438,39 +441,51 @@ jQuery.event = {
 				}
 			}
 		}
-		function quickMatch( elem, m ) {
-			return !(
-				m[1] && elem.tagName != m[1] || 
-				m[2] && elem.id != m[2] || 
-				m[3] && (new RegExp( "\\b" + m[3] + "\\b" )).test(elem.className) ||
-				m[4] && elem.getAttribute(m[4]) == m[5]
+
+		function quickIs( elem, m ) {
+//TODO: gen the match fn and set m[3] = (new RegExp( "\\b" + m[3] + "\\b" ))
+//TODO: tolowercase m[1] in setup
+//TODO: add falsy :empty (firstChild), :first-child (previousSibling), :last-child (nextSibling),
+			return (
+				!m[1] || elem.tagName.toLowerCase() === m[1] && 
+				!m[2] || elem.id === m[2] && 
+				!m[3] || m[3].test( elem.className ) &&
+//TODO: make a test to ensure == matches the null returned by getAttribute for [name]
+//ALSO: will m[5] return undefined in all regexp impls? If not fix it
+				!m[4] || elem.getAttribute( m[4] ) == m[5] &&
+				!m[6] || !elem[ m[6] ]
 			);
 		}
 
 		event = jQuery.event.fix( event || window.event );
 		var handlers = (jQuery._data( this, "events" ) || {})[ event.type ] || [],
-			args = Array.prototype.slice.call( arguments, 0 );
+			delegates = handlers.delegates,
+			args = Array.prototype.slice.call( arguments, 0 ),
+			cur = event.target,
+			selector, hlist;
 
 		// Use the fix-ed jQuery.Event rather than the (read-only) native event
 		args[0] = event;
-		event.currentTarget = this;
 
 		// Run delegates first; they may want to stop propagation beneath us
-		var delegates = handlers.delegates,
-			cur = event.target;
-		if ( delegates ) {
+		// Avoid disabled elements in IE (#6911) and non-left-click bubbling in Firefox (#3861)
+		if ( delegates && !cur.disabled && event.button || event.type !== "click"  ) {
 			do {
-				for ( var selector in delegates ) {
-					if ( jQuery( cur ).is( selector ) ) {
-						dispatch( event, delegates[selector], args );
+				for ( selector in delegates ) {
+					hlist = delegates[selector];
+					if ( hlist.match? quickIs( cur, hlist.match ) : jQuery( cur ).is( sel ) ) {
+						dispatch( cur, event, hlist, args );
+						if ( event.isImmediatePropagationStopped() ) {
+							break;
+						}
 					}
 				}
-			} while ( !event.isPropagationStopped() && (cur = cur.parentNode) != event.currentTarget );
+			} while ( !event.isPropagationStopped() && (cur = cur.parentNode) !== this );
 		}
 
 		// Run directly-bound events if no delegates stopped propagation below our level
-		if ( handlers.length && !delegates || cur == event.currentTarget ) {
-			dispatch( event, handlers, args );
+		if ( handlers.length && !delegates || cur === this ) {
+			dispatch( this, event, handlers, args );
 		}
 		return event.result;
 	},
@@ -1094,7 +1109,19 @@ jQuery.fn.off = function( events, selector, fn ) {
 		events = events.split(" ");
 	}
 	for ( var i = 0; i < events.length; i++ ) {
-		event = events[i];
+		var match = events[i].match(/^([^\.]*)(\..+)?/) || [],		//TODO: replace rnamespaces or add regexp, !exclusive check
+			type = match[1] || "",
+			namespaces = match[2] || "",
+			evlist = (jQuery._data( this, "events" ) || {})[ type ] || [];
+
+		if ( selector ) {
+			if ( selector === "*" ) {
+				delete evlist.delegates;	// TODO: do we need cleanup to prevent mem leaks??
+				continue;
+			}
+			evlist = (evlist.delegates || {})[ selector ] || [];
+		}
+		jQuery.event.remove(
 		
 	}
 };
