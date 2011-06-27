@@ -9,6 +9,72 @@ var rnamespaces = /\.(.*)$/,
 		return nm.replace(rescape, "\\$&");
 	};
 
+
+function addEvents( elem, types, handler, setup ) {
+
+	var type = jQuery.type( types ),
+		elemData = jQuery._data( elem );
+		
+	if ( handler === false ) {
+		handler = returnFalse;
+	}
+	
+	// Ignore bad events, banned noData elements, and falsy handlers (ugh, #7229)
+	if ( elem.nodeType === 3 || elem.nodeType === 8 || !types || !elemData || !handler ) {
+		return;
+	}
+
+	// We get a map of event types/handlers, spaced list of types, or array of types
+	if ( type === "object" ) {
+		for ( var event in types ) {
+			addEvent( elem, event, types[event], setup );
+		}
+		return;
+	}
+	if ( type === "string" ) {
+		types = types.split(" ");
+	}
+
+	// Give handler a unique ID, used to find/remove it later
+	if ( !handler.guid ) {
+		handler.guid = jQuery.guid++;
+	}
+
+	var events = elemData.events,
+		eventHandle = elemData.handle;
+
+	if ( !events ) {
+		elemData.events = events = {};
+	}
+
+	if ( !eventHandle ) {
+		elemData.handle = eventHandle = function( e ) {
+			// Discard the second event of a jQuery.event.trigger() and
+			// when an event is called after a page has unloaded
+			return typeof jQuery !== "undefined" && (!e || jQuery.event.triggered !== e.type) ?
+				jQuery.event.handle.apply( eventHandle.elem, arguments ) :
+				undefined;
+		};
+	}
+
+	// Add elem as a property of the handle function
+	// This is to prevent a memory leak with non-native events in IE.
+	eventHandle.elem = elem;
+
+	for ( var i = 0; i < types.length; i++ ) {
+//TODO: move regexp to top
+		var match = types[i].match( /^([^\.]*)?(?:\.(.+))?$/ ) || [];
+		if ( match[1] ) {
+			if ( match[2] ) {
+				// Canonicalize namespaces
+				match[2] = match[2].split(".").sort().join(".");
+			}
+			setup( elem, events, match[1], match[2], handler );
+		}
+	}
+
+}
+
 /*
  * A number of helper functions used for managing events.
  * Many of the ideas behind this code originated from
@@ -138,6 +204,10 @@ jQuery.event = {
 
 		// Nullify elem to prevent memory leaks in IE
 		elem = null;
+	},
+	
+	addDelegate: function( elem, types, selector, handler, data ) {
+	
 	},
 
 	global: {},
@@ -1048,39 +1118,6 @@ var liveMap = {
 	mouseenter: "mouseover",
 	mouseleave: "mouseout"
 };
-
-function eventDirector( elem, events, handler, singleAction, massAction ) {
-
-	if ( elem.nodeType === 3 || elem.nodeType === 8 ) {
-		return;
-	}
-	var type = jQuery.type( events );
-	if ( type === "undefined" ) {
-		massAction( elem );
-		return;
-	}
-	if ( type === "object" ) {
-		for ( var event in events ) {
-			eventDirector( elem, event, events[event], singleAction, massAction );
-		}
-		return;
-	}
-	if ( type === "string" ) {
-		events = events.split(" ");
-	}
-	if ( handler === false ) {
-		handler = returnFalse;
-	}
-	for ( var i = 0; i < events.length; i++ ) {
-		var match = events[i].match( /^([^\.]*)?(\..+)?$/ ) || [];	// is namespace dot-started?
-		if ( match[1] ) {
-			singleAction( elem, match[1], match[2], handler );
-		} else {
-			massAction( );
-		}
-	}
-
-}
 
 jQuery.fn.on = function( events, selector, data, fn ) {
 	
