@@ -444,40 +444,35 @@ jQuery.event = {
 
 		function quickIs( elem, m ) {
 //TODO: gen the match fn and set m[3] = (new RegExp( "\\b" + m[3] + "\\b" ))
-//TODO: tolowercase m[1] in setup
-//TODO: add falsy :empty (firstChild), :first-child (previousSibling), :last-child (nextSibling),
 			return (
+//TODO: tolowercase m[1] in setup
 				!m[1] || elem.tagName.toLowerCase() === m[1] && 
 				!m[2] || elem.id === m[2] && 
 				!m[3] || m[3].test( elem.className ) &&
 //TODO: make a test to ensure == matches the null returned by getAttribute for [name]
 //ALSO: will m[5] return undefined in all regexp impls? If not fix it
-				!m[4] || elem.getAttribute( m[4] ) == m[5] &&
-				!m[6] || !elem[ m[6] ]
+				!m[4] || elem.getAttribute( m[4] ) == m[5]
 			);
+//TODO: add falsy :empty (firstChild), :first-child (previousSibling), :last-child (nextSibling),
 		}
 
 		event = jQuery.event.fix( event || window.event );
 		var handlers = (jQuery._data( this, "events" ) || {})[ event.type ] || [],
 			delegates = handlers.delegates,
 			args = Array.prototype.slice.call( arguments, 0 ),
-			cur = event.target,
-			selector, hlist;
+			cur = event.target;
 
 		// Use the fix-ed jQuery.Event rather than the (read-only) native event
 		args[0] = event;
 
 		// Run delegates first; they may want to stop propagation beneath us
-		// Avoid disabled elements in IE (#6911) and non-left-click bubbling in Firefox (#3861)
-		if ( delegates && !cur.disabled && event.button || event.type !== "click"  ) {
+		// Avoid non-left-click bubbling in Firefox (#3861) and disabled elements in IE (#6911)
+		if ( delegates && !cur.disabled && !(event.button && event.type === "click")  ) {
 			do {
-				for ( selector in delegates ) {
-					hlist = delegates[selector];
+				for ( var selector in delegates ) {
+					var hlist = delegates[selector];
 					if ( hlist.match? quickIs( cur, hlist.match ) : jQuery( cur ).is( sel ) ) {
 						dispatch( cur, event, hlist, args );
-						if ( event.isImmediatePropagationStopped() ) {
-							break;
-						}
 					}
 				}
 			} while ( !event.isPropagationStopped() && (cur = cur.parentNode) !== this );
@@ -1054,6 +1049,39 @@ var liveMap = {
 	mouseleave: "mouseout"
 };
 
+function eventDirector( elem, events, handler, singleAction, massAction ) {
+
+	if ( elem.nodeType === 3 || elem.nodeType === 8 ) {
+		return;
+	}
+	var type = jQuery.type( events );
+	if ( type === "undefined" ) {
+		massAction( elem );
+		return;
+	}
+	if ( type === "object" ) {
+		for ( var event in events ) {
+			eventDirector( elem, event, events[event], singleAction, massAction );
+		}
+		return;
+	}
+	if ( type === "string" ) {
+		events = events.split(" ");
+	}
+	if ( handler === false ) {
+		handler = returnFalse;
+	}
+	for ( var i = 0; i < events.length; i++ ) {
+		var match = events[i].match( /^([^\.]*)?(\..+)?$/ ) || [];	// is namespace dot-started?
+		if ( match[1] ) {
+			singleAction( elem, match[1], match[2], handler );
+		} else {
+			massAction( );
+		}
+	}
+
+}
+
 jQuery.fn.on = function( events, selector, data, fn ) {
 	
 	// Parameter hockey; selector and data are optional
@@ -1097,33 +1125,7 @@ jQuery.fn.off = function( events, selector, fn ) {
 	}
 
 	// Events can be a string/array of event names, or a map of event names/fns
-	var type = jQuery.type( events ),
-		event;
-	if ( type === "object" ) {
-		for ( event in events ) {
-			jQuery.fn.off( event, selector, events[event] );
-		}
-		return;
-	}
-	if ( type === "string" ) {
-		events = events.split(" ");
-	}
-	for ( var i = 0; i < events.length; i++ ) {
-		var match = events[i].match(/^([^\.]*)(\..+)?/) || [],		//TODO: replace rnamespaces or add regexp, !exclusive check
-			type = match[1] || "",
-			namespaces = match[2] || "",
-			evlist = (jQuery._data( this, "events" ) || {})[ type ] || [];
 
-		if ( selector ) {
-			if ( selector === "*" ) {
-				delete evlist.delegates;	// TODO: do we need cleanup to prevent mem leaks??
-				continue;
-			}
-			evlist = (evlist.delegates || {})[ selector ] || [];
-		}
-		jQuery.event.remove(
-		
-	}
 };
 
 jQuery.each(["live", "die"], function( i, name ) {
