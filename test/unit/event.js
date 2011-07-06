@@ -22,14 +22,14 @@ test("bind(),live(),delegate() with non-null,defined data", function() {
 				equal( data, 0, "non-null, defined data (zero) is correctly passed" );
 			};
 
-	jQuery("#foo").bind("foo", handler);
-	jQuery("#foo").live("foo", handler);
+//	jQuery("#foo").bind("foo", handler);
+//	jQuery("#foo").live("foo", handler);
 	jQuery("div").delegate("#foo", "foo", handler);
 
 	jQuery("#foo").trigger("foo", 0);
 
-	jQuery("#foo").unbind("foo", handler);
-	jQuery("#foo").die("foo", handler);
+//	jQuery("#foo").unbind("foo", handler);
+//	jQuery("#foo").die("foo", handler);
 	jQuery("div").undelegate("#foo", "foo");
 
 });
