@@ -163,10 +163,12 @@ jQuery.event = {
 	remove: function( elem, types, removefn, selector ) {
 
 		// For remove, types can be an event object
+//TODO: maybe remove this? replaced its use in jQuery.fn.one already
 		if ( types && types.type ) {
+//TODO: is this the only reason we have event.handler? if so maybe remove it?
 			removefn = types.handler;
 			types = types.type;
-			//TODO: need types.selector?? where is this feature used???
+//TODO: need types.selector?? where is this feature used???
 		}
 
 		// Called once for each type.namespace in types
@@ -289,7 +291,7 @@ var eventList = selector? eventType.delegates || [] : eventType;
 		event.type = type;
 		event.exclusive = exclusive;
 		event.namespace = namespaces.join(".");
-		event.namespace_re = new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.)?") + "(\\.|$)");
+		event.namespace_re = event.namespace? new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.)?") + "(\\.|$)") : null;
 		
 		// triggerHandler() and global events don't bubble or run the default action
 		if ( onlyHandlers || !elem ) {
@@ -388,11 +390,9 @@ var eventList = selector? eventType.delegates || [] : eventType;
 	handle: function( event ) {
 
 		function dispatch( target, event, handlers, args ) {
-
 			var run_all = !event.exclusive && !event.namespace;
 
 			event.currentTarget = target;
-
 			for ( var j = 0, l = handlers.length; j < l && !event.isImmediatePropagationStopped(); j++ ) {
 				var handleObj = handlers[ j ];
 
@@ -448,10 +448,9 @@ var eventList = selector? eventType.delegates || [] : eventType;
 		// Avoid disabled elements in IE (#6911) and non-left-click bubbling in Firefox (#3861)
 		if ( delegates.length && !cur.disabled && !(event.button && event.type === "click")  ) {
 			jqcur = jQuery( cur );
-			do {
+			for ( cur = event.target; cur && cur != this && !event.isPropagationStopped(); cur = cur.parentNode, jqcur[0] = cur ) {
 				var selMatch = {},
 					matched = [];
-				jqcur[0] = cur;
 				for ( var i=0; i < delegates.length; i++ ) {
 					var handler = delegates[ i ],
 						sel = handler.selector;
@@ -459,9 +458,10 @@ var eventList = selector? eventType.delegates || [] : eventType;
 						matched.push( handler );
 					}
 				}
-				dispatch( cur, event, matched, args );
-//TODO: unhack this condition
-			} while ( !event.isPropagationStopped() && (cur = cur.parentNode || this) !== this );
+				if ( matched.length ) {
+					dispatch( cur, event, matched, args );
+				}
+			}
 		}
 
 		// Run all handlers for this level; snapshot the handler list in case a handler modifies it
@@ -958,30 +958,60 @@ jQuery.each(["bind", "one"], function( i, name ) {
 */
 
 jQuery.fn.extend({
-	on: function( types, selector, data, fn, /* internal */ justOne ) {
-		// Selector and data are optional
-		if ( typeof selector !== "string" ) {
-			fn = data;
-			data = selector;
-			selector = undefined;
+// types, fn
+// types, data, fn
+// types, selector, fn
+// types, selector, data, fn
+// Object
+// Object, data
+// IN ALL CASES fn can be `false`
+// data can be a function
+// selector should be a string
+	on: function( types, selector, data, fn ) {
+		var arglen = arguments.length;
+
+		// Types can be a map of types/handlers
+		if ( typeof types === "object" ) {
+//TODO: allow an array of stuff here
+			if ( typeof selector !== "string" ) {
+				data = selector;
+				selector = undefined;
+			}
+		} else {
+			// Selector and data are optional
+			if ( arglen === 2 ) {
+				// ( types, fn )
+				fn = selector;
+				data = selector = undefined;
+			} else if ( arglen === 3 ) {
+				if ( typeof selector === "string" ) {
+					// ( types, selector, fn )
+					fn = data;
+					data = undefined;
+				} else {
+					// ( types, data, fn )
+					fn = data;
+					data = selector;
+					selector = undefined;
+				}
+			}
 		}
-		if ( data === false || jQuery.isFunction( data ) ) {
-			fn = data || returnFalse;
-			data = undefined;
-		}
-		if ( types === "unload" && justOne !== true ) {
-			return this.one( types, selector, data, fn );
-		}
+
+//TODO: handle this lower down so we get namespaces
+//		if ( types === "unload"  ) {
+//			return this.one( types, selector, data, fn );
+//		}
 		return this.each(function() {
 			jQuery.event.add( this, types, fn, data, selector );
 		});
 	},
 	one: function( types, selector, data, fn ) {
 		var handler = function( event ) {
-			jQuery( this ).unbind( event, handler );
+			jQuery.event.remove( this, event.type, handler );
+//TODO: this won't work, fn may not be in that loc on the arglist
 			return fn.apply( this, arguments );
 		};
-		return this.on( types, selector, data, handler, true );
+		return this.on.apply( this, arguments );
 	},
 	off: function( types, selector, fn ) {
 		// Selector and fn are optional
@@ -994,15 +1024,12 @@ jQuery.fn.extend({
 		});
 	},
 
-	bind: function( type, data, fn ) {
-		return this.on( type, undefined, data, fn );
-	},
-	unbind: function( type, fn ) {
-		return this.off( type, undefined, fn );
-	},
-
 	live: function( types, data, fn ) {
-	//TODO: add hover hack
+//TODO: add hover hack
+		if ( arguments.length === 2 ) {
+			fn = data;
+			data = undefined;
+		}
 		jQuery( this.context ).on( types, this.selector, data, fn );
 		return this;
 	},
@@ -1012,6 +1039,10 @@ jQuery.fn.extend({
 	},
 
 	delegate: function( selector, types, data, fn ) {
+		if ( arguments.length === 3 ) {
+			fn = data;
+			data = undefined;
+		}
 		return this.on( types, selector, data, fn );
 	},
 	undelegate: function( selector, types, fn ) {
@@ -1059,6 +1090,9 @@ jQuery.fn.extend({
 		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
 	}
 });
+
+jQuery.fn.bind = jQuery.fn.on;
+jQuery.fn.unbind = jQuery.fn.off;
 
 var liveMap = {
 	focus: "focusin",
