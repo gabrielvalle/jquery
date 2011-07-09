@@ -9,35 +9,25 @@ var rnamespaces = /\.(.*)$/,
 		return nm.replace(rescape, "\\$&");
 	};
 
+var delegateMap = {
+	focus: "focusin",
+	blur: "focusout",
+	mouseenter: "mouseover",
+	mouseleave: "mouseout"
+};
+
 
 function eachEvent( elem, types, handler, setup ) {
 
 //TODO: move regexp to top
-	var rtypenamespace = /^([^\.]*)?(?:\.(.+))?$/,
-		elemData;
-		
-	if ( handler === false ) {
-		handler = returnFalse;
-	}
+	var rtypenamespace = /^([^\.]*)?(?:\.(.+))?$/;
 
 	// Don't attach events to text and comment nodes (allow plain objects tho)
 	if ( elem.nodeType === 3 || elem.nodeType === 8 ) {
 		return;
 	}
 
-	// Map of event types/handlers, spaced list of types, or array of types
-	if ( typeof types === "object" && !types.preventDefault ) {
-		for ( var type in types ) {
-			eachEvent( elem, type, types[type], setup );
-		}
-		return;
-	}
-	if ( !types ) {
-		types = "";
-	}
-	if ( typeof types === "string" ) {
-		types = types.split(" ");
-	}
+	types = (types || "").split(" ");
 
 	for ( var i = 0; i < types.length; i++ ) {
 		var match = types[i].match( rtypenamespace ) || [];
@@ -163,12 +153,10 @@ jQuery.event = {
 	remove: function( elem, types, removefn, selector ) {
 
 		// For remove, types can be an event object
-//TODO: maybe remove this? replaced its use in jQuery.fn.one already
 		if ( types && types.type ) {
-//TODO: is this the only reason we have event.handler? if so maybe remove it?
 			removefn = types.handler;
 			types = types.type;
-//TODO: need types.selector?? where is this feature used???
+			selector = types.selector;
 		}
 
 		// Called once for each type.namespace in types
@@ -195,7 +183,7 @@ jQuery.event = {
 			namespaces =  namespaces.length? new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.)?") + "(\\.|$)") : null;
 
 			// Only need to loop for special events or selective removal
-			if ( handler || namespaces || (selector && selector !== "**") || special.remove ) {
+			if ( handler || namespaces || selector || special.remove ) {
 var eventList = selector? eventType.delegates || [] : eventType;
 				for ( j = 0; j < eventList.length; j++ ) {
 					handleObj = eventList[ j ];
@@ -447,14 +435,14 @@ var eventList = selector? eventType.delegates || [] : eventType;
 		// Run delegates first; they may want to stop propagation beneath us
 		// Avoid disabled elements in IE (#6911) and non-left-click bubbling in Firefox (#3861)
 		if ( delegates.length && !cur.disabled && !(event.button && event.type === "click")  ) {
-			jqcur = jQuery( cur );
-			for ( cur = event.target; cur && cur != this && !event.isPropagationStopped(); cur = cur.parentNode, jqcur[0] = cur ) {
+		
+			for ( cur = event.target; cur && cur != this && !event.isPropagationStopped(); cur = cur.parentNode ) {
 				var selMatch = {},
 					matched = [];
 				for ( var i=0; i < delegates.length; i++ ) {
 					var handler = delegates[ i ],
 						sel = handler.selector;
-					if ( selMatch[ sel ] || selMatch !== false && (selMatch[ sel ] = handler.quick? quickIs( cur, handler.quick ) : jqcur.is( sel )) ) {
+					if ( selMatch[ sel ] || selMatch !== false && (selMatch[ sel ] = handler.quick? quickIs( cur, handler.quick ) : jQuery( cur ).is( sel )) ) {
 						matched.push( handler );
 					}
 				}
@@ -958,46 +946,56 @@ jQuery.each(["bind", "one"], function( i, name ) {
 */
 
 jQuery.fn.extend({
-// types, fn
-// types, data, fn
-// types, selector, fn
-// types, selector, data, fn
-// Object
-// Object, data
-// IN ALL CASES fn can be `false`
-// data can be a function
-// selector should be a string
-	on: function( types, selector, data, fn ) {
-		var arglen = arguments.length;
+
+	on: function( types, selector, data, fn, /*INTERNAL*/ one ) {
 
 		// Types can be a map of types/handlers
 		if ( typeof types === "object" ) {
-//TODO: allow an array of stuff here
+			// ( types-Object, selector, data )
 			if ( typeof selector !== "string" ) {
+				// ( types-Object, data )
 				data = selector;
 				selector = undefined;
 			}
-		} else {
-			// Selector and data are optional
-			if ( arglen === 2 ) {
-				// ( types, fn )
-				fn = selector;
-				data = selector = undefined;
-			} else if ( arglen === 3 ) {
-				if ( typeof selector === "string" ) {
-					// ( types, selector, fn )
-					fn = data;
-					data = undefined;
-				} else {
-					// ( types, data, fn )
-					fn = data;
-					data = selector;
-					selector = undefined;
-				}
+			for ( var type in types ) {
+				this.on( type, selector, data, types[type], one );
 			}
+			return this;
 		}
 
-//TODO: handle this lower down so we get namespaces
+		if ( data == null && fn == null ) {
+			// ( types, fn )
+			fn = selector;
+			data = selector = undefined;
+		} else if ( fn == null ) {
+			if ( typeof selector === "string" ) {
+				// ( types, selector, fn )
+				fn = data;
+				data = undefined;
+			} else {
+				// ( types, data, fn )
+				fn = data;
+				data = selector;
+				selector = undefined;
+			}
+		}
+		if ( fn === false ) {
+			fn = returnFalse;
+		} else if ( !fn ) {
+			return this;
+		}
+
+		// FINALLY we know where the args are
+		if ( one === 1 ) {
+			var origFn = fn;
+			fn = function( event ) {
+				jQuery.event.remove( this, event.type, fn );
+				return origFn.apply( this, arguments );
+			};
+			// Caller can remove using original fn
+			fn.guid = origFn.guid || (origFn.guid = jQuery.guid++);
+		}
+		//TODO: handle this lower down so we get namespaces??
 //		if ( types === "unload"  ) {
 //			return this.one( types, selector, data, fn );
 //		}
@@ -1006,16 +1004,23 @@ jQuery.fn.extend({
 		});
 	},
 	one: function( types, selector, data, fn ) {
-		var handler = function( event ) {
-			jQuery.event.remove( this, event.type, handler );
-//TODO: this won't work, fn may not be in that loc on the arglist
-			return fn.apply( this, arguments );
-		};
-		return this.on.apply( this, arguments );
+		return this.on.call( this, types, selector, data, fn, 1 );
 	},
 	off: function( types, selector, fn ) {
-		// Selector and fn are optional
+		if ( types && types.preventDefault ) {
+			// ( event )  native or jQuery.Event
+			return this.off( types.type, types.handler );
+		}
+		if ( typeof types === "object" ) {
+			// ( types-object [, selector] )
+			for ( var type in types ) {
+				this.off( type, selector, types[type] );
+			}
+			return this;
+		}
+
 		if ( typeof selector !== "string" ) {
+			// ( types [, fn] )
 			fn = selector;
 			selector = undefined;
 		}
@@ -1025,10 +1030,14 @@ jQuery.fn.extend({
 	},
 
 	live: function( types, data, fn ) {
-//TODO: add hover hack
 		if ( arguments.length === 2 ) {
 			fn = data;
 			data = undefined;
+		}
+		if ( typeof types === "string" ) {
+			// hover hack; no namespaces or fancy trimmings???
+//TODO: unit test for this crap
+			types = types.replace( /\bhover\b/, "mouseover mouseout" );
 		}
 		jQuery( this.context ).on( types, this.selector, data, fn );
 		return this;
@@ -1039,14 +1048,15 @@ jQuery.fn.extend({
 	},
 
 	delegate: function( selector, types, data, fn ) {
-		if ( arguments.length === 3 ) {
+		if ( arguments.length === 3 && typeof types !== "object" ) {
 			fn = data;
 			data = undefined;
 		}
 		return this.on( types, selector, data, fn );
 	},
 	undelegate: function( selector, types, fn ) {
-		return this.off( types, selector, fn );
+		// ( namespace ) or ( selector, types [, fn] )
+		return arguments.length == 1? this.off( selector, "**" ) : this.off( types, selector, fn );
 	},
 
 	trigger: function( type, data ) {
@@ -1093,13 +1103,6 @@ jQuery.fn.extend({
 
 jQuery.fn.bind = jQuery.fn.on;
 jQuery.fn.unbind = jQuery.fn.off;
-
-var liveMap = {
-	focus: "focusin",
-	blur: "focusout",
-	mouseenter: "mouseover",
-	mouseleave: "mouseout"
-};
 
 /*
 jQuery.each(["live", "die"], function( i, name ) {
