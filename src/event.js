@@ -5,22 +5,15 @@ var rnamespaces = /\.(.*)$/,
 	rperiod = /\./g,
 	rspaces = / /g,
 	rescape = /[^\w\s.|`]/g,
-	fcleanup = function( nm ) {
-		return nm.replace(rescape, "\\$&");
+	rtypenamespace = /^([^\.]*)?(?:\.(.+))?$/,
+	delegateTypeMap = {
+		focus: "focusin",
+		blur: "focusout",
+		mouseenter: "mouseover",
+		mouseleave: "mouseout"
 	};
 
-var delegateMap = {
-	focus: "focusin",
-	blur: "focusout",
-	mouseenter: "mouseover",
-	mouseleave: "mouseout"
-};
-
-
 function eachEvent( elem, types, handler, setup ) {
-
-//TODO: move regexp to top
-	var rtypenamespace = /^([^\.]*)?(?:\.(.+))?$/;
 
 	// Don't attach events to text and comment nodes (allow plain objects tho)
 	if ( elem.nodeType === 3 || elem.nodeType === 8 ) {
@@ -60,6 +53,9 @@ jQuery.event = {
 		eachEvent( elem, types, addfn, function( type, namespaces, handler )  {
 
 			var elemData = jQuery._data( elem ),
+				handleObj = handleObjIn ?
+					jQuery.extend({}, handleObjIn) :
+					{ handler: handler, data: data },
 				eventHandle, events;
 			
 			// Is this a banned noData element, or no type/handler specified?
@@ -75,7 +71,7 @@ jQuery.event = {
 				handler.guid = jQuery.guid++;
 			}
 
-			// Set up elem's event list and handler if there isn't one yet, we'll need it
+			// Set up elem's event list and main handler if there isn't one yet; we'll need it
 			if ( !events ) {
 				elemData.events = events = {};
 			}
@@ -88,21 +84,23 @@ jQuery.event = {
 						undefined;
 				};
 			}
+			
+			// If a delegated event, rename non-bubbling events to their bubbling counterparts
+			if ( selector && delegateTypeMap[ type ] ) {
+				handleObj.preType = type;
+				handleObj.type = delegateTypeMap[ type ];
+			}
 
 			// Add elem as a property of the handle function
 			// This is to prevent a memory leak with non-native events in IE.
 			eventHandle.elem = elem;
 
-			var handleObj = handleObjIn ?
-					jQuery.extend({}, handleObjIn) :
-					{ handler: handler, data: data },
-				handlers = events[ type ],
+			var handlers = events[ type ],
 				special = jQuery.event.special[ type ] || {};
 
 			// Init the event handler queue
 			if ( !handlers ) {
 				handlers = events[ type ] = [];
-				handlers.delegates = [];
 			
 				// Only use addEventListener/attachEvent if the special events handler returns false
 				if ( !special.setup || special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
@@ -124,8 +122,15 @@ jQuery.event = {
 			}
 			if ( selector ) {
 				handleObj.selector = selector;
-				//TODO: quickIn regexp here
-				// handleObj.quick = xxx.match
+//TODO: quickIn regexp here
+// handleObj.quick = xxx.match
+// and precompute class regexp
+// and map properties
+//TODO: gen the match fn and set m[3] = (new RegExp( "\\b" + m[3] + "\\b" ))
+//TODO: tolowercase m[1] in setup
+//TODO: make a test to ensure == matches the null returned by getAttribute for [name]
+//ALSO: will m[5] return undefined in all regexp impls? If not fix it
+//TODO: add falsy :empty (firstChild), :first-child (previousSibling), :last-child (nextSibling),
 			}
 
 			if ( special.add ) {
@@ -136,8 +141,18 @@ jQuery.event = {
 				}
 			}
 
-			// Add the function to the element's handler list
-			(selector? handlers.delegates : handlers).push( handleObj );
+			// Add to the element's handler list, delegates in front
+			if ( selector ) {
+				for ( var pos = 0; pos < handlers.length; pos++ ) {
+					if ( !handlers[ pos ].selector ) {
+						break;
+					}
+				}
+				handlers.splice( pos, 0, handleObj );
+				handlers.delegateCount = pos + 1;
+			} else {
+				handlers.push( handleObj );
+			}
 			
 			// Keep track of which events have ever been used, for event optimization
 			jQuery.event.global[ type ] = true;
@@ -184,15 +199,17 @@ jQuery.event = {
 
 			// Only need to loop for special events or selective removal
 			if ( handler || namespaces || selector || special.remove ) {
-var eventList = selector? eventType.delegates || [] : eventType;
-				for ( j = 0; j < eventList.length; j++ ) {
-					handleObj = eventList[ j ];
+				for ( j = 0; j < eventType.length; j++ ) {
+					handleObj = eventType[ j ];
 
 					if ( !handler || handler.guid === handleObj.guid ) {
 						if ( !namespaces || namespaces.test( handleObj.namespace ) ) {
 							if ( !selector || selector === handleObj.selector || selector === "**" && handleObj.selector ) {
-								eventList.splice( j--, 1 );
+								eventType.splice( j--, 1 );
 
+								if ( handleObj.selector ) {
+									eventType.delegateCount--;
+								}
 								if ( special.remove ) {
 									special.remove.call( elem, handleObj );
 								}
@@ -201,16 +218,12 @@ var eventList = selector? eventType.delegates || [] : eventType;
 					}
 				}
 			} else {
-				// Removing all events (potentially just all delegated events)
-				if ( !selector ) {
-					events[ type ] = [];
-				}
-				events[ type ].delegates = [];
-				eventType = events[ type ];
+				// Removing all events
+				eventType.length = 0;
 			}
 
 			// remove generic event handler if no more handlers exist
-			if ( eventType.length === 0 && eventType.delegates && eventType.delegates.length === 0 ) {
+			if ( eventType.length === 0 ) {
 				if ( !special.teardown || special.teardown.call( elem, namespaces ) === false ) {
 					jQuery.removeEvent( elem, type, elemData.handle );
 				}
@@ -262,7 +275,7 @@ var eventList = selector? eventType.delegates || [] : eventType;
 			namespaces.sort();
 		}
 
-		if ( (!elem || !elem.parentNode || jQuery.event.customEvent[ type ]) && !jQuery.event.global[ type ] ) {
+		if ( (!elem || jQuery.event.customEvent[ type ]) && !jQuery.event.global[ type ] ) {
 			// No jQuery handlers for this event type, and it can't have inline handlers
 			return;
 		}
@@ -408,42 +421,56 @@ var eventList = selector? eventType.delegates || [] : eventType;
 		}
 
 		function quickIs( elem, m ) {
-//TODO: gen the match fn and set m[3] = (new RegExp( "\\b" + m[3] + "\\b" ))
 			return (
-//TODO: tolowercase m[1] in setup
 				!m[1] || elem.tagName.toLowerCase() === m[1] && 
 				!m[2] || elem.id === m[2] && 
 				!m[3] || m[3].test( elem.className ) &&
-//TODO: make a test to ensure == matches the null returned by getAttribute for [name]
-//ALSO: will m[5] return undefined in all regexp impls? If not fix it
 				!m[4] || elem.getAttribute( m[4] ) == m[5] &&
 				!m[6] || !elem[ m[6] ]
 			);
-//TODO: add falsy :empty (firstChild), :first-child (previousSibling), :last-child (nextSibling),
 		}
 
+		// Make a writable jQuery.Event from the native event object
 		event = jQuery.event.fix( event || window.event );
-		var handlers = (jQuery._data( this, "events" ) || {})[ event.type ] || [],
-			delegates = handlers.delegates || [],
+		
+		var handlers = ((jQuery._data( this, "events" ) || {})[ event.type ] || []),
+			delegateCount = handlers.delegateCount,
 			args = Array.prototype.slice.call( arguments, 0 ),
-			cur = event.target,
-			jqcur;
+			cur = event.target;
+
+		// Copy the handler list, in case one of the existing handlers adds/removes handlers
+		handlers = handlers.slice(0);
 
 		// Use the fix-ed jQuery.Event rather than the (read-only) native event
 		args[0] = event;
 
 		// Run delegates first; they may want to stop propagation beneath us
 		// Avoid disabled elements in IE (#6911) and non-left-click bubbling in Firefox (#3861)
-		if ( delegates.length && !cur.disabled && !(event.button && event.type === "click")  ) {
+		if ( delegateCount && cur && !cur.disabled && !(event.button && event.type === "click")  ) {
 		
-			for ( cur = event.target; cur && cur != this && !event.isPropagationStopped(); cur = cur.parentNode ) {
+			for ( ; cur && cur != this && !event.isPropagationStopped(); cur = cur.parentNode ) {
 				var selMatch = {},
 					matched = [];
-				for ( var i=0; i < delegates.length; i++ ) {
-					var handler = delegates[ i ],
-						sel = handler.selector;
-					if ( selMatch[ sel ] || selMatch !== false && (selMatch[ sel ] = handler.quick? quickIs( cur, handler.quick ) : jQuery( cur ).is( sel )) ) {
-						matched.push( handler );
+				for ( var i = 0; i < delegateCount; i++ ) {
+					var handleObj = handlers[ i ],
+						sel = handleObj.selector;
+					if ( selMatch[ sel ] || selMatch !== false && (selMatch[ sel ] = handleObj.quick? quickIs( cur, handleObj.quick ) : jQuery( cur ).is( sel )) ) {
+//-----------
+						var related = null;
+						if ( handleObj.preType === "mouseenter" || handleObj.preType === "mouseleave" ) {
+							//TODO: don't let this clobber the type for all attached events?
+							//event.type = handleObj.preType;
+
+							// Don't match a child element with the same selector
+							related = jQuery( event.relatedTarget ).closest( handleObj.selector )[0];
+							if ( related && jQuery.contains( cur, related ) ) {
+								related = cur;
+							}
+						}
+//-----------
+						if ( !related || related !== cur ) {
+							matched.push( handleObj );
+						}
 					}
 				}
 				if ( matched.length ) {
@@ -452,10 +479,11 @@ var eventList = selector? eventType.delegates || [] : eventType;
 			}
 		}
 
-		// Run all handlers for this level; snapshot the handler list in case a handler modifies it
-		if ( handlers.length ) {
-			dispatch( this, event, handlers.slice(0), args );
+		// Run non-delegated handlers for this level
+		if ( (delegateCount || 0) < handlers.length ) {
+			dispatch( this, event, delegateCount? handlers.slice( delegateCount ) : handlers, args );
 		}
+
 		return event.result;
 	},
 
@@ -530,20 +558,7 @@ var eventList = selector? eventType.delegates || [] : eventType;
 	special: {
 		ready: {
 			// Make sure the ready event is setup
-			setup: jQuery.bindReady,
-			teardown: jQuery.noop
-		},
-
-		live: {
-			add: function( handleObj ) {
-				jQuery.event.add( this,
-					liveConvert( handleObj.origType, handleObj.selector ),
-					jQuery.extend({}, handleObj, {handler: liveHandler, guid: handleObj.handler.guid}) );
-			},
-
-			remove: function( handleObj ) {
-				jQuery.event.remove( this, liveConvert( handleObj.origType, handleObj.selector ), handleObj );
-			}
+			setup: jQuery.bindReady
 		},
 
 		beforeunload: {
@@ -683,13 +698,6 @@ var withinElement = function( event ) {
 			event.type = eventType;
 		}
 	}
-},
-
-// In case of event delegation, we only need to rename the event.type,
-// liveHandler will take care of the rest.
-delegate = function( event ) {
-	event.type = event.data;
-	jQuery.event.handle.apply( this, arguments );
 };
 
 // Create mouseenter and mouseleave events
@@ -903,48 +911,6 @@ if ( !jQuery.support.focusinBubbles ) {
 	});
 }
 
-/*
-jQuery.each(["bind", "one"], function( i, name ) {
-	jQuery.fn[ name ] = function( type, data, fn ) {
-		var handler;
-
-		// Handle object literals
-		if ( typeof type === "object" ) {
-			for ( var key in type ) {
-				this[ name ](key, data, type[key], fn);
-			}
-			return this;
-		}
-
-		if ( arguments.length === 2 || data === false ) {
-			fn = data;
-			data = undefined;
-		}
-
-		if ( name === "one" ) {
-			handler = function( event ) {
-				jQuery( this ).unbind( event, handler );
-				return fn.apply( this, arguments );
-			};
-			handler.guid = fn.guid || jQuery.guid++;
-		} else {
-			handler = fn;
-		}
-
-		if ( type === "unload" && name !== "one" ) {
-			this.one( type, data, fn );
-
-		} else {
-			for ( var i = 0, l = this.length; i < l; i++ ) {
-				jQuery.event.add( this[i], type, handler, data );
-			}
-		}
-
-		return this;
-	};
-});
-*/
-
 jQuery.fn.extend({
 
 	on: function( types, selector, data, fn, /*INTERNAL*/ one ) {
@@ -985,14 +951,13 @@ jQuery.fn.extend({
 			return this;
 		}
 
-		// FINALLY we know where the args are
 		if ( one === 1 ) {
 			var origFn = fn;
 			fn = function( event ) {
 				jQuery.event.remove( this, event.type, fn );
 				return origFn.apply( this, arguments );
 			};
-			// Caller can remove using original fn
+			// Use same guid so caller can remove using origFn
 			fn.guid = origFn.guid || (origFn.guid = jQuery.guid++);
 		}
 		//TODO: handle this lower down so we get namespaces??
