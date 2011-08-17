@@ -582,3 +582,22 @@ test("jQuery.data supports interoperable removal of hyphenated/camelCase propert
 
 	});
 });
+
+test("removeData() with cache on other window does not throw exception #10080", function() {
+
+	expect(1);
+
+	stop();
+
+	jQuery("<iframe id='myframe' src='data/iframe.html'></iframe>").appendTo("#qunit-fixture").load(function() {
+
+		var iframe = jQuery( "#myframe" )[ 0 ].contentWindow;
+
+		jQuery( iframe ).bind( "unload", function() {
+			ok( true, "called unload" );
+			start();
+		});
+
+		jQuery("#myframe").remove();
+	});
+});
