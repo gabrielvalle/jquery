@@ -593,6 +593,7 @@ test("removeData() with cache on other window does not throw exception #10080", 
 
 		var iframe = jQuery( "#myframe" )[ 0 ].contentWindow;
 
+		console.log( iframe );
 		jQuery( iframe ).bind( "unload", function() {
 			ok( true, "called unload" );
 			start();
