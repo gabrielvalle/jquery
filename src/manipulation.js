@@ -541,21 +541,20 @@ function findInputs( elem ) {
 // Create safe fragments
 function safeFragment( context ) {
 	var nodeNames = (
-		"abbr article aside audio canvas datalist details figcaption figure footer " + 
+		"abbr article aside audio canvas datalist details figcaption figure footer " +
 		"header hgroup mark meter nav output progress section subline summary time video"
-	).split(/\s+/), 
+	).split(/\s+/),
 	safeFrag = context.createDocumentFragment();
-
 
 	if ( safeFrag.createElement ) {
 		while ( nodeNames.length ) {
-			safeFrag.createElement( 
+			safeFrag.createElement(
 				nodeNames.shift()
 			);
 		}
 	}
 
-	return safeFrag; 
+	return safeFrag;
 }
 
 jQuery.extend({
@@ -567,7 +566,6 @@ jQuery.extend({
 
 		if ( (!jQuery.support.noCloneEvent || !jQuery.support.noCloneChecked) &&
 				(elem.nodeType === 1 || elem.nodeType === 11) && !jQuery.isXMLDoc(elem) ) {
-
 			// IE copies events bound via attachEvent when using cloneNode.
 			// Calling detachEvent on the clone will also remove the events
 			// from the original. In order to get around this, we use some

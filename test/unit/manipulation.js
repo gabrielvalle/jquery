@@ -478,20 +478,15 @@ test("append HTML5 sectioning elements (Bug #6485)", function () {
 });
 
 test("clone() (#6485)", function () {
-	expect(2);
-
+	expect(1);
 
 	jQuery("<article><section><aside>HTML5 elements</aside></section></article>").appendTo("#qunit-fixture");
-
-
-	equal( jQuery("article").children().length, 1, "Starts with one child element" );
 
 	var clone = jQuery("article").clone();
 
 	jQuery("#qunit-fixture").append( clone );
 
 	equal( jQuery("aside").length, 2, "clone()ing HTML5 elems does not collapse them" );
-
 });
 
 test("html(String) with HTML5 (Bug #6485)", function() {
