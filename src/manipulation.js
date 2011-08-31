@@ -624,7 +624,13 @@ jQuery.extend({
 					var tag = (rtagName.exec( elem ) || ["", ""])[1].toLowerCase(),
 						wrap = wrapMap[ tag ] || wrapMap._default,
 						depth = wrap[0],
-						div = context.createElement("div");
+						div = context.createElement("div"),
+						html5elementsArr = 'abbr|article|aside|audio|canvas|datalist|details|figcaption|figure|footer|header|hgroup|mark|meter|nav|output|progress|section|subline|summary|time|video'.split('|'),
+						html5elementsArrLen = html5elementsArr.length,
+						html5elementsArrCar = -1,						
+						html5safeFrag = context.createDocumentFragment();
+						if (html5safeFrag.createElement) while (++html5elementsArrCar < html5elementsArrLen) html5safeFrag.createElement(html5elementsArr[html5elementsArrCar]);
+						html5safeFrag.appendChild(div);
 
 					// Go to html and back, then peel off extra wrappers
 					div.innerHTML = wrap[1] + elem + wrap[2];
