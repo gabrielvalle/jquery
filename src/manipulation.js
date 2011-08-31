@@ -538,6 +538,26 @@ function findInputs( elem ) {
 	}
 }
 
+// Create safe fragments
+function safeFragment( context ) {
+	var nodeNames = (
+		"abbr article aside audio canvas datalist details figcaption figure footer " + 
+		"header hgroup mark meter nav output progress section subline summary time video"
+	).split(/\s+/), 
+	safeFrag = context.createDocumentFragment();
+
+
+	if ( safeFrag.createElement ) {
+		while ( nodeNames.length ) {
+			safeFrag.createElement( 
+				nodeNames.shift()
+			);
+		}
+	}
+
+	return safeFrag; 
+}
+
 jQuery.extend({
 	clone: function( elem, dataAndEvents, deepDataAndEvents ) {
 		var clone = elem.cloneNode(true),
@@ -547,6 +567,7 @@ jQuery.extend({
 
 		if ( (!jQuery.support.noCloneEvent || !jQuery.support.noCloneChecked) &&
 				(elem.nodeType === 1 || elem.nodeType === 11) && !jQuery.isXMLDoc(elem) ) {
+
 			// IE copies events bound via attachEvent when using cloneNode.
 			// Calling detachEvent on the clone will also remove the events
 			// from the original. In order to get around this, we use some
@@ -625,24 +646,9 @@ jQuery.extend({
 						wrap = wrapMap[ tag ] || wrapMap._default,
 						depth = wrap[0],
 						div = context.createElement("div"),
-						html5 = {
-							nodeNames: (
-								"abbr article aside audio canvas datalist details figcaption figure footer " + 
-								"header hgroup mark meter nav output progress section subline summary time video"
-							).split(/\s+/), 
+						safe = safeFragment( context );
 
-							safeFrag: context.createDocumentFragment() 
-						};
-
-					if ( html5.safeFrag.createElement ) {
-						while ( html5.nodeNames.length ) {
-							html5.safeFrag.createElement( 
-								html5.nodeNames.shift()
-							);
-						}
-					}
-
-					html5.safeFrag.appendChild( div );
+					safe.appendChild( div );
 
 					// Go to html and back, then peel off extra wrappers
 					div.innerHTML = wrap[1] + elem + wrap[2];

@@ -468,33 +468,38 @@ test("append the same fragment with events (Bug #6997, 5566)", function () {
 test("append HTML5 sectioning elements (Bug #6485)", function () {
 	expect(2);
 
-	jQuery("#qunit-fixture").append("<article style='width: 243px;'><section><aside>HTML5 elements</aside></section></article>");
-	
-	var article = jQuery("#qunit-fixture article");
-	equals( article.width(), 243, 'HTML5 elements are styleable');
-	
-	var aside = article.find('section > aside');
-	equals( aside.length, 1, 'HTML5 elements do not collapse their children')
+	jQuery("#qunit-fixture").append("<article style='font-size:10px'><section><aside>HTML5 elements</aside></section></article>");
+
+	var article = jQuery("article"),
+	aside = jQuery("aside");
+
+	equal( article.css("fontSize"), "10px", 'HTML5 elements are styleable');
+	equal( aside.length, 1, 'HTML5 elements do not collapse their children')
 });
 
 test("clone() (#6485)", function () {
-	expect(1);
+	expect(2);
 
 
 	jQuery("<article><section><aside>HTML5 elements</aside></section></article>").appendTo("#qunit-fixture");
-	
-	jQuery("#qunit-fixture article").clone().appendTo('#qunit-fixture');
-	
-	equals( jQuery('#qunit-fixture article > section > aside').length, 2, "clone()ing HTML5 elems does not collapse them" );
+
+
+	equal( jQuery("article").children().length, 1, "Starts with one child element" );
+
+	var clone = jQuery("article").clone();
+
+	jQuery("#qunit-fixture").append( clone );
+
+	equal( jQuery("aside").length, 2, "clone()ing HTML5 elems does not collapse them" );
 
 });
 
 test("html(String) with HTML5 (Bug #6485)", function() {
 	expect(2);
-	
-    jQuery("#qunit-fixture").html("<article><section><aside>HTML5 elements</aside></section></article>");
-	equals( jQuery("#qunit-fixture").children().children().length, 1, "Make sure HTML5 article elements can hold children. innerHTML shortcut path" );
-	equals( jQuery("#qunit-fixture").children().children().children().length, 1, "Make sure nested HTML5 elements can hold children." );
+
+	jQuery("#qunit-fixture").html("<article><section><aside>HTML5 elements</aside></section></article>");
+	equal( jQuery("#qunit-fixture").children().children().length, 1, "Make sure HTML5 article elements can hold children. innerHTML shortcut path" );
+	equal( jQuery("#qunit-fixture").children().children().children().length, 1, "Make sure nested HTML5 elements can hold children." );
 });
 
 test("append(xml)", function() {
