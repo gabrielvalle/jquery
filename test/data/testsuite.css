@@ -123,3 +123,5 @@ body, div { background: url(http://static.jquery.com/files/rocker/images/logo_jq
 
 /* #6652 REMOVE FILTER:ALPHA(OPACITY=100) AFTER ANIMATION */
 #t6652 div { filter: alpha(opacity=50); }
+
+article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block;}

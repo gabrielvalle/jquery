@@ -465,18 +465,36 @@ test("append the same fragment with events (Bug #6997, 5566)", function () {
 	jQuery("#listWithTabIndex li.test6997").eq(1).click();
 });
 
-
-
 test("append HTML5 sectioning elements (Bug #6485)", function () {
 	expect(2);
 
 	jQuery("#qunit-fixture").append("<article style='width: 243px;'><section><aside>HTML5 elements</aside></section></article>");
 	
 	var article = jQuery("#qunit-fixture article");
-	equals( article[0].offsetWidth, 243, 'HTML5 elements are styleable');
+	equals( article.width(), 243, 'HTML5 elements are styleable');
 	
 	var aside = article.find('section > aside');
 	equals( aside.length, 1, 'HTML5 elements do not collapse their children')
+});
+
+test("clone() (#6485)", function () {
+	expect(1);
+
+
+	jQuery("<article><section><aside>HTML5 elements</aside></section></article>").appendTo("#qunit-fixture");
+	
+	jQuery("#qunit-fixture article").clone().appendTo('#qunit-fixture');
+	
+	equals( jQuery('#qunit-fixture article > section > aside').length, 2, "clone()ing HTML5 elems does not collapse them" );
+
+});
+
+test("html(String) with HTML5 (Bug #6485)", function() {
+	expect(2);
+	
+    jQuery("#qunit-fixture").html("<article><section><aside>HTML5 elements</aside></section></article>");
+	equals( jQuery("#qunit-fixture").children().children().length, 1, "Make sure HTML5 article elements can hold children. innerHTML shortcut path" );
+	equals( jQuery("#qunit-fixture").children().children().children().length, 1, "Make sure nested HTML5 elements can hold children." );
 });
 
 test("append(xml)", function() {
@@ -973,20 +991,6 @@ test("clone() (#8070)", function () {
 	selects.remove();
 });
 
-
-test("clone() (#6485)", function () {
-	expect(1);
-
-
-	jQuery("<article><section><aside>HTML5 elements</aside></section></article>").appendTo("#qunit-fixture");
-	
-	jQuery("#qunit-fixture article").clone().appendTo('#qunit-fixture');
-	
-	equals( jQuery('#qunit-fixture article > section > aside').length, 2, "clone()ing HTML5 elems does not collapse them" );
-
-});
-
-
 test("clone()", function() {
 	expect(37);
 	equals( "This is a normal link: Yahoo", jQuery("#en").text(), "Assert text for #en" );
@@ -1222,15 +1226,6 @@ var testHtml = function(valueObj) {
 test("html(String)", function() {
 	testHtml(bareObj);
 });
-
-test("html(String) with HTML5 (Bug #6485)", function() {
-	expect(2);
-	
-    jQuery("#qunit-fixture").html("<article><section><aside>HTML5 elements</aside></section></article>");
-	equals( jQuery("#qunit-fixture").children().children().length, 1, "Make sure HTML5 article elements can hold children. innerHTML shortcut path" );
-	equals( jQuery("#qunit-fixture").children().children().children().length, 1, "Make sure nested HTML5 elements can hold children." );
-});
-
 
 test("html(Function)", function() {
 	testHtml(functionReturningObj);
