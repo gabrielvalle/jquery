@@ -21,7 +21,8 @@ jQuery.support = (function() {
 		eventName,
 		i,
 		isSupported,
-		offsetSupport;
+		offsetSupport,
+		html5;
 
 	// Preliminary tests
 	div.setAttribute("className", "t");
@@ -303,6 +304,28 @@ jQuery.support = (function() {
 	})( testElement, div );
 
 	jQuery.extend( support, offsetSupport );
+
+	// If UA doesn't modern elements, pre-shim them. Based on approach by Jonathan Neal
+	if ( !support.unknownElems ) {
+
+		html5 = {
+			nodeNames: (
+				"abbr article aside audio canvas datalist details figcaption figure footer header " +
+				"hgroup mark meter nav output progress section subline summary time video"
+			).split(/\s+/),
+		};
+
+		html5.frag = document.createDocumentFragment();
+
+		if ( html5.frag.createElement ) {
+			while ( html5.nodeNames.length ) {
+				html5safeFrag.createElement( html5.nodeNames.shift() );
+			}
+		}
+
+		html5.frag.appendChild( div );
+	}
+
 
 	// Null connected elements to avoid leaks in IE
 	testElement = fragment = select = opt = body = marginDiv = div = input = null;
