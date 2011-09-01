@@ -549,7 +549,7 @@ function safeFragment( context ) {
 	if ( safeFrag.createElement ) {
 		while ( nodeNames.length ) {
 			safeFrag.createElement(
-				nodeNames.shift()
+				nodeNames.pop()
 			);
 		}
 	}
