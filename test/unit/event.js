@@ -2286,6 +2286,81 @@ test("custom events with colons (#3533, #8272)", function() {
 
 })();
 
+test("jQuery.event.propHooks", function() {
+	expect( 1 );
+	ok( jQuery.event.propHooks, "jQuery.event.propHooks exists" );
+});
+
+test("jQuery.event.propHooks as object", function() {
+	expect( 2 );
+
+	// Store as object
+	jQuery.event.propHooks[ "foo" ] = {
+		propA: true,
+		propB: function( event, originalEvent ) {
+			var modified = event; //jQuery.extend( {}, event, originalEvent );
+			modified.propB = "propB value";
+			return modified;
+		}
+	};
+
+	jQuery({}).bind( "foo", function( event ) {
+		ok( event.propA, "event.propA exists" );
+		ok( event.propB, "event.propB exists" );
+	}).trigger( "foo" );
+});
+
+test("jQuery.event.propHooks as function", function() {
+
+	expect( 1 );
+
+	// Store as function
+	jQuery.event.propHooks[ "bar" ] = function( event, originalEvent ) {
+		// receives the event object for processing
+		var modified = event;
+		modified.propC = true;
+		return modified;
+	};
+
+	jQuery({}).bind( "bar", function() {
+		ok( event.propC, "event.propC exists" );
+	}).trigger( "bar" );
+});
+
+test("jQuery.event.propHooks usecase", function() {
+
+	expect( 2 );
+
+	jQuery.event.propHooks[ "drop" ] = {
+		// Only copy from event.originalEvent
+		"dataTransfer": true
+	};
+
+	jQuery({}).bind( "drop", function() {
+		ok( event.dataTransfer, "event.dataTransfer exists" );
+	}).trigger( "drop" );
+
+
+	jQuery.event.propHooks[ "drop" ] = {
+		// Copy from event.originalEvent for processing first
+		"dataTransfer": function( event, originalEvent ) {
+			// receives the event object for processing
+			var modified = event;
+			modified.dataTransfer = originalEvent.dataTransfer;
+			return modified;
+		}
+	};
+
+	jQuery({}).bind( "drop", function() {
+		ok( event.dataTransfer, "event.dataTransfer exists" );
+	}).trigger( "drop" );
+
+});
+
+
+
+
+
 /*
 test("event properties", function() {
 	stop();
