@@ -477,9 +477,7 @@ jQuery.event = {
 					// Just copy for property hook handlers set to `true`
 					if ( propHandler === true ) {
 
-						propVal = originalEvent[ prop ];
-						event[ prop ] = propVal != null ?
-							propVal : "";
+						event[ prop ] = originalEvent[ prop ];
 
 					// For property hook handler functions, call with target as context,
 					// event and originalEvent
@@ -495,7 +493,6 @@ jQuery.event = {
 	},
 
 	fix: function( event ) {
-
 		if ( event[ jQuery.expando ] ) {
 			return event;
 		}
