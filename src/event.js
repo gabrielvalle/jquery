@@ -265,7 +265,7 @@ jQuery.event = {
 			}
 		}
 	},
-	
+
 	// Events that are safe to short-circuit if no handlers are attached.
 	// Native DOM events should not be added, they may have inline handlers.
 	customEvent: {
@@ -311,7 +311,7 @@ jQuery.event = {
 		event.exclusive = exclusive;
 		event.namespace = namespaces.join(".");
 		event.namespace_re = new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.)?") + "(\\.|$)");
-		
+
 		// triggerHandler() and global events don't bubble or run the default action
 		if ( onlyHandlers || !elem ) {
 			event.preventDefault();
@@ -402,12 +402,18 @@ jQuery.event = {
 				jQuery.event.triggered = undefined;
 			}
 		}
-		
+
 		return event.result;
 	},
 
 	handle: function( event ) {
+
 		event = jQuery.event.fix( event || window.event );
+
+		if ( jQuery.event.propHooks[ event.type ] ) {
+			event = jQuery.event.applyPropHooks( event );
+		}
+
 		// Snapshot the handlers list since a called handler may add/remove events.
 		var handlers = ((jQuery._data( this, "events" ) || {})[ event.type ] || []).slice(0),
 			run_all = !event.exclusive && !event.namespace,
@@ -449,7 +455,47 @@ jQuery.event = {
 
 	props: "altKey attrChange attrName bubbles button cancelable charCode clientX clientY ctrlKey currentTarget data detail eventPhase fromElement handler keyCode layerX layerY metaKey newValue offsetX offsetY pageX pageY prevValue relatedNode relatedTarget screenX screenY shiftKey srcElement target toElement view wheelDelta which".split(" "),
 
+	propHooks: {},
+
+	applyPropHooks: function( event ) {
+
+		var hook = this.propHooks[ event.type ],
+		originalEvent, prop, propHandler, propVal;
+
+		if ( hook ) {
+
+			originalEvent = event;
+
+			if ( typeof hook === "function" ) {
+				event = hook( event );
+			} else {
+				// Iterate all property handler hooks for this event type
+				for ( prop in hook ) {
+					// Cache ref to property hook handler
+					propHandler = hook[ prop ];
+
+					// Just copy for property hook handlers set to `true`
+					if ( propHandler === true ) {
+
+						propVal = originalEvent[ prop ];
+						event[ prop ] = propVal != null ?
+							propVal : "";
+
+					// For property hook handler functions, call with target as context,
+					// event and originalEvent
+					} else if ( typeof propHandler === "function" ) {
+
+						event[ prop ] = propHandler( event );
+					}
+				}
+			}
+		}
+
+		return event;
+	},
+
 	fix: function( event ) {
+
 		if ( event[ jQuery.expando ] ) {
 			return event;
 		}
