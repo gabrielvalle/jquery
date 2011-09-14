@@ -2315,8 +2315,8 @@ test("jQuery.event.propHooks as object", function() {
 	};
 
 	$fixture.bind( "click", function( event ) {
-		ok( event.propA != null, "event.propA exists" );
-		ok( event.propB != null, "event.propB exists" );
+		ok( ("propA" in event), "event.propA exists" );
+		ok( ("propB" in event), "event.propB exists" );
 	}).trigger( "click" );
 });
 
@@ -2367,7 +2367,7 @@ test("jQuery.event.propHooks usecase", function() {
 	};
 
 	$fixture.bind( "fakedrop", function( event ) {
-		ok( event.dataTransfer != null, "event.dataTransfer exists, just copied" );
+		ok( ("dataTransfer" in event), "event.dataTransfer exists, just copied" );
 	}).trigger( "fakedrop" );
 
 	$fixture.unbind( "fakedrop" );

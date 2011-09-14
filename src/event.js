@@ -457,14 +457,13 @@ jQuery.event = {
 
 	propHooks: {},
 
-	applyPropHooks: function( event ) {
+	applyPropHooks: function( event, original ) {
 
 		var hook = this.propHooks[ event.type ],
-		originalEvent, prop, propHandler, propVal;
+		currentEvent, prop, propHandler;
 
 		if ( hook ) {
-
-			originalEvent = event;
+			currentEvent = event;
 
 			if ( typeof hook === "function" ) {
 				event = hook( event );
@@ -477,13 +476,13 @@ jQuery.event = {
 					// Just copy for property hook handlers set to `true`
 					if ( propHandler === true ) {
 
-						event[ prop ] = originalEvent[ prop ];
+						event[ prop ] = ( original && original[ prop ] ) || currentEvent[ prop ];
 
 					// For property hook handler functions, call with target as context,
 					// event and originalEvent
 					} else if ( typeof propHandler === "function" ) {
 
-						event[ prop ] = propHandler( event );
+						event[ prop ] = propHandler( original || event );
 					}
 				}
 			}
@@ -547,6 +546,10 @@ jQuery.event = {
 		// Note: button is not normalized, so don't use it
 		if ( !event.which && event.button !== undefined ) {
 			event.which = (event.button & 1 ? 1 : ( event.button & 2 ? 3 : ( event.button & 4 ? 2 : 0 ) ));
+		}
+
+		if ( jQuery.event.propHooks[ event.type ] ) {
+			event = jQuery.event.applyPropHooks( event, originalEvent );
 		}
 
 		return event;
