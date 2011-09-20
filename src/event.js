@@ -7,6 +7,7 @@ var rnamespaces = /\.(.*)$/,
 	rescape = /[^\w\s.|`]/g,
 	rtypenamespace = /^([^\.]*)?(?:\.(.+))?$/,
 	rhoverHack =  /\bhover(\.\S+)?/,
+	rmouseEvent = /^(?:mouse|click)/,
 	rquickIs = /^([\w\-]+)?(?:#([\w\-]+))?(?:\.([\w\-]+))?(?:\[([\w+\-]+)=["']?([\w\-]*)["']?\])?(?::(first-child|last-child|empty))?$/,
 	quickPseudoMap = {
 		"empty": "firstChild",
@@ -1067,14 +1068,12 @@ jQuery.each( ("blur focus focusin focusout load resize scroll unload click dblcl
 	if ( jQuery.attrFn ) {
 		jQuery.attrFn[ name ] = true;
 	}
-});
 
-// pageX/pageY event property Hooks
-jQuery.each( ("click dblclick " +
-	"mousedown mouseup mousemove mouseover mouseout " +
-	"mouseenter mouseleave contextmenu").split(" "), function( i, type ) {
+	// Add internal event property hooks to mouse events
+	if ( rmouseEvent.test( name ) ) {
 
-		jQuery.event.propHooks[ type ] = function( event ) {
+		jQuery.event.propHooks[ name ] = function( event, original ) {
+
 			var eventDocument, doc, body;
 
 			// Calculate pageX/Y if missing and clientX/Y available
@@ -1092,9 +1091,9 @@ jQuery.each( ("click dblclick " +
 			if ( !event.which && event.button !== undefined ) {
 				event.which = (event.button & 1 ? 1 : ( event.button & 2 ? 3 : ( event.button & 4 ? 2 : 0 ) ));
 			}
-
 			return event;
 		};
+	}
 });
 
 })( jQuery );
