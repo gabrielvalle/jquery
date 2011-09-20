@@ -26,8 +26,8 @@ var rnamespaces = /\.(.*)$/,
 	},
 	quickIs = function( elem, m ) {
 		return (
-			(!m[1] || elem.nodeName.toLowerCase() === m[1]) && 
-			(!m[2] || elem.id === m[2]) && 
+			(!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
+			(!m[2] || elem.id === m[2]) &&
 			(!m[3] || m[3].test( elem.className )) &&
 			(!m[4] || elem.getAttribute( m[4] ) == m[5]) &&
 			(!m[6] || !elem[ m[6] ])
@@ -106,7 +106,7 @@ jQuery.event = {
 			handleObj = jQuery.extend({
 				type: type,
 				origType: tns[1],
-				data: data, 
+				data: data,
 				handler: handler,
 				guid: handler.guid,
 				selector: selector,
@@ -126,7 +126,7 @@ jQuery.event = {
 			if ( !handlers ) {
 				handlers = events[ type ] = [];
 				handlers.delegateCount = 0;
-			
+
 				// Only use addEventListener/attachEvent if the special events handler returns false
 				if ( !special.setup || special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
 					// Bind the global event handler to the element
@@ -153,7 +153,7 @@ jQuery.event = {
 			} else {
 				handlers.push( handleObj );
 			}
-			
+
 			// Keep track of which events have ever been used, for event optimization
 			jQuery.event.global[ type ] = true;
 		}
@@ -170,7 +170,7 @@ jQuery.event = {
 		var elemData = jQuery.hasData( elem ) && jQuery._data( elem ),
 			t, tns, type, namespaces, origCount,
 			j, events, special, handle, eventType, handleObj;
-				
+
 		if ( !elemData || !(events = elemData.events) ) {
 			return;
 		}
@@ -252,7 +252,7 @@ jQuery.event = {
 			jQuery.removeData( elem, [ "events", "handle" ], true );
 		}
 	},
-	
+
 	// Events that are safe to short-circuit if no handlers are attached.
 	// Native DOM events should not be added, they may have inline handlers.
 	customEvent: {
@@ -361,7 +361,7 @@ jQuery.event = {
 			}
 			addHandlers( doc.defaultView || doc.parentWindow || window, bubbleType );
 		}
-		
+
 		// Bubble up the DOM tree
 		for ( i = 0; i < eventPath.length; i++ ) {
 			cur = eventPath[ i ];
@@ -402,7 +402,7 @@ jQuery.event = {
 				}
 			}
 		}
-		
+
 		return event.result;
 	},
 
@@ -410,7 +410,11 @@ jQuery.event = {
 
 		// Make a writable jQuery.Event from the native event object
 		event = jQuery.event.fix( event || window.event );
-		
+
+		if ( jQuery.event.propHooks[ event.type ] ) {
+			event = jQuery.event.applyPropHooks( event );
+		}
+
 		var handlers = ((jQuery._data( this, "events" ) || {})[ event.type ] || []),
 			delegateCount = handlers.delegateCount,
 			args = Array.prototype.slice.call( arguments, 0 ),
@@ -447,7 +451,7 @@ jQuery.event = {
 				}
 			}
 		}
-		
+
 		// Copy the remaining (bound) handlers in case they're changed
 		handlers = handlers.slice( delegateCount );
 
@@ -468,6 +472,42 @@ jQuery.event = {
 	},
 
 	props: "altKey attrChange attrName bubbles button cancelable charCode clientX clientY ctrlKey currentTarget data detail eventPhase fromElement handler keyCode layerX layerY metaKey newValue offsetX offsetY pageX pageY prevValue relatedNode relatedTarget screenX screenY shiftKey srcElement target toElement view wheelDelta which".split(" "),
+
+	propHooks: {},
+
+	applyPropHooks: function( event, original ) {
+
+		var hook = this.propHooks[ event.type ],
+		currentEvent, prop, propHandler;
+
+		if ( hook ) {
+			currentEvent = event;
+
+			if ( typeof hook === "function" ) {
+				event = hook( event );
+			} else {
+				// Iterate all property handler hooks for this event type
+				for ( prop in hook ) {
+					// Cache ref to property hook handler
+					propHandler = hook[ prop ];
+
+					// Just copy for property hook handlers set to `true`
+					if ( propHandler === true ) {
+
+						event[ prop ] = ( original && original[ prop ] ) || currentEvent[ prop ];
+
+					// For property hook handler functions, call with target as context,
+					// event and originalEvent
+					} else if ( typeof propHandler === "function" ) {
+
+						event[ prop ] = propHandler( original || event );
+					}
+				}
+			}
+		}
+
+		return event;
+	},
 
 	fix: function( event ) {
 		if ( event[ jQuery.expando ] ) {
@@ -526,6 +566,10 @@ jQuery.event = {
 			event.which = (event.button & 1 ? 1 : ( event.button & 2 ? 3 : ( event.button & 4 ? 2 : 0 ) ));
 		}
 
+		if ( jQuery.event.propHooks[ event.type ] ) {
+			event = jQuery.event.applyPropHooks( event, originalEvent );
+		}
+
 		return event;
 	},
 
@@ -540,7 +584,7 @@ jQuery.event = {
 			// Make sure the ready event is setup
 			setup: jQuery.bindReady
 		},
-		
+
 		focus: {
 			delegateType: "focusin",
 			trigger: useNativeMethod
@@ -580,7 +624,7 @@ function dispatch( target, event, handlers, args ) {
 		// Triggered event must either 1) be non-exclusive and have no namespace, or
 		// 2) have namespace(s) a subset or equal to those in the bound event (both can have no namespace).
 		if ( run_all || (!event.namespace && !handleObj.namespace) || event.namespace_re && event.namespace_re.test( handleObj.namespace ) ) {
-		
+
 			// Pass in a reference to the handler function itself
 			// So that we can later remove it
 			event.handler = handleObj.handler;
@@ -740,7 +784,7 @@ if ( !jQuery.support.submitBubbles ) {
 					type = jQuery.nodeName( elem, "input" ) || jQuery.nodeName( elem, "button" ) ? elem.type : "";
 
 				// Do the elem.form check after type to avoid VML-related crash in IE (#9807)
-				if ( (e.type === "click" && (type === "submit" || type === "image") && elem.form) || 
+				if ( (e.type === "click" && (type === "submit" || type === "image") && elem.form) ||
 					 (e.type === "keypress" && e.keyCode === 13 && (type === "text" || type === "password") && elem.form) ) {
 					simulate( "submit", this, e );
 				}
@@ -987,7 +1031,7 @@ jQuery.fn.extend({
 			jQuery.event.remove( this, types, fn, selector );
 		});
 	},
-	
+
 	bind: function( types, data, fn ) {
 		return this.on( types, null, data, fn );
 	},
