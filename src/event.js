@@ -476,37 +476,7 @@ jQuery.event = {
 	propHooks: {},
 
 	applyPropHooks: function( event, original ) {
-
-		var hook = this.propHooks[ event.type ],
-		currentEvent, prop, propHandler;
-
-		if ( hook ) {
-			currentEvent = event;
-
-			if ( typeof hook === "function" ) {
-				event = hook( event );
-			} else {
-				// Iterate all property handler hooks for this event type
-				for ( prop in hook ) {
-					// Cache ref to property hook handler
-					propHandler = hook[ prop ];
-
-					// Just copy for property hook handlers set to `true`
-					if ( propHandler === true ) {
-
-						event[ prop ] = ( original && original[ prop ] ) || currentEvent[ prop ];
-
-					// For property hook handler functions, call with target as context,
-					// event and originalEvent
-					} else if ( typeof propHandler === "function" ) {
-
-						event[ prop ] = propHandler( original || event );
-					}
-				}
-			}
-		}
-
-		return event;
+		return this.propHooks[ event.type ]( original || event ) || event;
 	},
 
 	fix: function( event ) {
