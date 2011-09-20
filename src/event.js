@@ -412,7 +412,7 @@ jQuery.event = {
 		event = jQuery.event.fix( event || window.event );
 
 		if ( jQuery.event.propHooks[ event.type ] ) {
-			event = jQuery.event.applyPropHooks( event );
+			event = jQuery.event.propHooks[ event.type ]( event );
 		}
 
 		var handlers = ((jQuery._data( this, "events" ) || {})[ event.type ] || []),
@@ -475,10 +475,6 @@ jQuery.event = {
 
 	propHooks: {},
 
-	applyPropHooks: function( event, original ) {
-		return this.propHooks[ event.type ]( original || event ) || event;
-	},
-
 	fix: function( event ) {
 		if ( event[ jQuery.expando ] ) {
 			return event;
@@ -521,7 +517,7 @@ jQuery.event = {
 		}
 
 		if ( jQuery.event.propHooks[ event.type ] ) {
-			event = jQuery.event.applyPropHooks( event, originalEvent );
+			event = jQuery.event.propHooks[ event.type ]( event, originalEvent );
 		}
 
 		return event;
