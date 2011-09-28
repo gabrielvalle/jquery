@@ -1,6 +1,7 @@
 (function( jQuery ) {
 
-var rnamespaces = /\.(.*)$/,
+var space = " ",
+	rnamespaces = /\.(.*)$/,
 	rformElems = /^(?:textarea|input|select)$/i,
 	rperiod = /\./g,
 	rspaces = / /g,
@@ -85,7 +86,7 @@ jQuery.event = {
 
 		// Handle multiple events separated by a space
 		// jQuery(...).bind("mouseover mouseout", fn);
-		types = types.replace( rhoverHack, "mouseover$1 mouseout$1" ).split( " " );
+		types = types.replace( rhoverHack, "mouseover$1 mouseout$1" ).split( space );
 		for ( t = 0; t < types.length; t++ ) {
 
 			tns = rtypenamespace.exec( types[t]  ) || [];
@@ -178,7 +179,7 @@ jQuery.event = {
 		}
 
 		// Once for each type.namespace in types; type may be omitted
-		types = (types || "").replace( rhoverHack, "mouseover$1 mouseout$1" ).split(" ");
+		types = (types || "").replace( rhoverHack, "mouseover$1 mouseout$1" ).split( space );
 		for ( t = 0; t < types.length; t++ ) {
 			tns = rtypenamespace.exec( types[t] ) || [];
 			type = tns[1];
@@ -467,7 +468,7 @@ jQuery.event = {
 
 	// Includes some event props shared by KeyEvent and MouseEvent
 	// *** attrChange attrName relatedNode srcElement  are not normalized, non-W3C, deprecated, will be removed in 1.8 ***
-	props: "attrChange attrName relatedNode srcElement altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp type view which".split(" "),
+	props: "attrChange attrName relatedNode srcElement altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp type view which".split( space ),
 
 	propHooks: {},
 
@@ -485,7 +486,7 @@ jQuery.event = {
 	},
 
 	mouseHooks: {
-		props: "button buttons clientX clientY fromElement layerX layerY offsetX offsetY pageX pageY screenX screenY toElement wheelDelta".split(" "),
+		props: "button buttons clientX clientY fromElement layerX layerY offsetX offsetY pageX pageY screenX screenY toElement wheelDelta".split( space ),
 		filter: function( event, original ) {
 			var eventDoc, doc, body,
 				button = original.button,
@@ -592,9 +593,9 @@ jQuery.event = {
 		// Piggyback on a donor event to simulate a different one.
 		// Fake originalEvent to avoid donor's stopPropagation, but if the
 		// simulated event prevents default then we do the same on the donor.
-		var e = jQuery.extend( 
-			new jQuery.Event(), 
-			event, 
+		var e = jQuery.extend(
+			new jQuery.Event(),
+			event,
 			{ type: type, isSimulated: true, originalEvent: {} }
 		);
 		if ( bubble ) {
@@ -836,7 +837,7 @@ if ( !jQuery.support.changeBubbles ) {
 			jQuery.event.add( this, "beforeactivate._change", function( e ) {
 				var elem = e.target;
 
-				if ( rformElems.test( elem.nodeName ) && !elem._change_attached ) {					
+				if ( rformElems.test( elem.nodeName ) && !elem._change_attached ) {
 					jQuery.event.add( elem, "change._change", function( event ) {
 						if ( this.parentNode && !event.isSimulated ) {
 							jQuery.event.simulate( "change", this.parentNode, event, true );
@@ -846,7 +847,7 @@ if ( !jQuery.support.changeBubbles ) {
 				}
 			});
 		},
-		
+
 		handle: function( event ) {
 			var elem = event.target;
 
@@ -1039,7 +1040,7 @@ jQuery.fn.extend({
 
 jQuery.each( ("blur focus focusin focusout load resize scroll unload click dblclick " +
 	"mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
-	"change select submit keydown keypress keyup error contextmenu").split(" "), function( i, name ) {
+	"change select submit keydown keypress keyup error contextmenu").split( space ), function( i, name ) {
 
 	// Handle event binding
 	jQuery.fn[ name ] = function( data, fn ) {
