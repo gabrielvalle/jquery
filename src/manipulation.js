@@ -1,11 +1,11 @@
 (function( jQuery ) {
 
+jQuery.shims = ( "abbr article aside audio canvas datalist details figcaption figure footer " +
+"header hgroup mark meter nav output progress section summary time video" ).split( " " );
+
 function createSafeFragment( document ) {
-	var nodeNames = (
-		"abbr article aside audio canvas datalist details figcaption figure footer " +
-		"header hgroup mark meter nav output progress section summary time video"
-	).split( " " ),
-	safeFrag = document.createDocumentFragment();
+	var nodeNames = jQuery.shims,
+		safeFrag = document.createDocumentFragment();
 
 	if ( safeFrag.createElement ) {
 		while ( nodeNames.length ) {
@@ -733,7 +733,7 @@ jQuery.extend({
 	},
 
 	cleanData: function( elems ) {
-		var data, id, 
+		var data, id,
 			cache = jQuery.cache,
 			special = jQuery.event.special,
 			deleteExpando = jQuery.support.deleteExpando;
