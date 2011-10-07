@@ -1,11 +1,9 @@
 (function( jQuery ) {
 
-jQuery.shims = ( "abbr article aside audio canvas datalist details figcaption figure footer " +
-"header hgroup mark meter nav output progress section summary time video" ).split( " " );
 
-function createSafeFragment( document ) {
-	var nodeNames = jQuery.shims,
-		safeFrag = document.createDocumentFragment();
+function createSafeFrag( document ) {
+	var nodeNames = createSafeFrag.shims,
+	safeFrag = document.createDocumentFragment();
 
 	if ( safeFrag.createElement ) {
 		while ( nodeNames.length ) {
@@ -16,6 +14,11 @@ function createSafeFragment( document ) {
 	}
 	return safeFrag;
 }
+
+createSafeFrag.shims = (
+	"abbr article aside audio canvas datalist details figcaption figure footer " +
+	"header hgroup mark meter nav output progress section summary time video"
+).split( " " );
 
 var rinlinejQuery = / jQuery\d+="(?:\d+|null)"/g,
 	rleadingWhitespace = /^\s+/,
@@ -39,7 +42,7 @@ var rinlinejQuery = / jQuery\d+="(?:\d+|null)"/g,
 		area: [ 1, "<map>", "</map>" ],
 		_default: [ 0, "", "" ]
 	},
-	safeFragment = createSafeFragment( document );
+	safeFragment = createSafeFrag( document );
 
 wrapMap.optgroup = wrapMap.option;
 wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -557,6 +560,12 @@ function findInputs( elem ) {
 }
 
 jQuery.extend({
+	shim: function() {
+		// Update local safeFragment
+		createSafeFrag.shims = createSafeFrag.shims.concat( [].slice.call( arguments, 0 ) );
+		safeFragment = createSafeFrag( document );
+	},
+
 	clone: function( elem, dataAndEvents, deepDataAndEvents ) {
 		var clone = elem.cloneNode(true),
 				srcElements,
@@ -650,7 +659,7 @@ jQuery.extend({
 						safeFragment.appendChild( div );
 					} else {
 						// Use a fragment created with the owner document
-						createSafeFragment( context ).appendChild( div );
+						createSafeFrag( context ).appendChild( div );
 					}
 
 					// Go to html and back, then peel off extra wrappers
