@@ -137,7 +137,7 @@ test("show(Number) - other displays", function() {
 
 
 // Supports #7397
-test("Persist correct display value", function() {
+test("Persist correct display value (#7397)", function() {
 	expect(3);
 	QUnit.reset();
 	stop();
@@ -165,6 +165,21 @@ test("Persist correct display value", function() {
 			});
 		});
 	});
+});
+
+test("Persist correct user display value (#10622)", function() {
+	expect( 1 );
+
+	// #show-tests is set display: inline
+	jQuery( "#qunit-fixture" ).append(
+		"<ul id='show-tests'><li style='display: inline;'>Hi there! I am set to display: inline;</li></ul>"
+	);
+
+	var $li = jQuery( "#show-tests li" ),
+		display = $li.css( "display" );
+
+
+	equal( $li.hide().show().css( "display" ), display, "hide(), show(), pesists user display style" );
 });
 
 test("show() resolves correct default display #8099", function() {

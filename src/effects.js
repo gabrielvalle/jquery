@@ -17,7 +17,7 @@ var elemdisplay = {},
 
 jQuery.fn.extend({
 	show: function( speed, easing, callback ) {
-		var elem, display;
+		var elem, display, olddisplay;
 
 		if ( speed || speed === 0 ) {
 			return this.animate( genFx("show", 3), speed, easing, callback);
@@ -28,18 +28,20 @@ jQuery.fn.extend({
 
 				if ( elem.style ) {
 					display = elem.style.display;
+					olddisplay = jQuery._data( elem, "olddisplay" );
 
 					// Reset the inline display of this element to learn if it is
 					// being hidden by cascaded rules or not
-					if ( !jQuery._data(elem, "olddisplay") && display === "none" ) {
+					if ( !olddisplay && display === "none" ) {
 						display = elem.style.display = "";
 					}
 
-					// Set elements which have been overridden with display: none
-					// in a stylesheet to whatever the default browser style is
-					// for such an element
-					if ( display === "none" || ( display === ""  && jQuery.css( elem, "display" ) === "none" ) ) {
-						jQuery._data(elem, "olddisplay", defaultDisplay(elem.nodeName));
+					// If no display style was previously captured and the display is currently "none"
+					// or "", and both are verified by checking the element's display value.
+					// It is possible that an element's default display has been overridden
+					// in a stylesheet, in these cases, we'll need to call defaultDisplay()
+					if ( !olddisplay && ( display === "none" || ( display === ""  && jQuery.css( elem, "display" ) === "none" ) ) ) {
+						jQuery._data( elem, "olddisplay", defaultDisplay(elem.nodeName) );
 					}
 				}
 			}
