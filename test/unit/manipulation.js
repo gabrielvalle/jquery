@@ -138,18 +138,17 @@ test("wrap(Function)", function() {
 });
 
 test("wrap(Function) with index", function() {
-	var expectedIndex = 0;
-        var targets = jQuery("#firstp,#first");
+	var expectedIndex = 0,
+	targets = jQuery("#firstp, #first");
 
 	expect(targets.length);
 	targets.wrap(function(i) {
-		equals( i, expectedIndex, "Check if the provided index (" + i + ") is as expected (" + expectedIndex + ")" );
+
+		equal( i, expectedIndex, "Check if the provided index (" + i + ") is as expected (" + expectedIndex + ")" );
 		expectedIndex++;
 
 		return "<div id='wrap_index_'" + i + "'></div>";
 	});
-
-        QUnit.reset();
 });
 
 var testWrapAll = function(val) {
