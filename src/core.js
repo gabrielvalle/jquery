@@ -35,12 +35,6 @@ var jQuery = function( selector, context ) {
 	rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
 	rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
 
-	// Useragent RegExp
-	rwebkit = /(webkit)[ \/]([\w.]+)/,
-	ropera = /(opera)(?:.*version)?[ \/]([\w.]+)/,
-	rmsie = /(msie) ([\w.]+)/,
-	rmozilla = /(mozilla)(?:.*? rv:([\w.]+))?/,
-
 	// Matches dashed string for camelizing
 	rdashAlpha = /-([a-z]|[0-9])/ig,
 	rmsPrefix = /^-ms-/,
@@ -49,12 +43,6 @@ var jQuery = function( selector, context ) {
 	fcamelCase = function( all, letter ) {
 		return ( letter + "" ).toUpperCase();
 	},
-
-	// Keep a UserAgent string for use with jQuery.browser
-	userAgent = navigator.userAgent,
-
-	// For matching the engine and version of the browser
-	browserMatch,
 
 	// The deferred used on DOM ready
 	readyList,
@@ -832,19 +820,6 @@ jQuery.extend({
 		return ( new Date() ).getTime();
 	},
 
-	// Use of jQuery.browser is frowned upon.
-	// More details: http://docs.jquery.com/Utilities/jQuery.browser
-	uaMatch: function( ua ) {
-		ua = ua.toLowerCase();
-
-		var match = rwebkit.exec( ua ) ||
-			ropera.exec( ua ) ||
-			rmsie.exec( ua ) ||
-			ua.indexOf("compatible") < 0 && rmozilla.exec( ua ) ||
-			[];
-
-		return { browser: match[1] || "", version: match[2] || "0" };
-	},
 
 	sub: function() {
 		function jQuerySub( selector, context ) {
@@ -865,26 +840,12 @@ jQuery.extend({
 		jQuerySub.fn.init.prototype = jQuerySub.fn;
 		var rootjQuerySub = jQuerySub(document);
 		return jQuerySub;
-	},
-
-	browser: {}
-});
+	}});
 
 // Populate the class2type map
 jQuery.each("Boolean Number String Function Array Date RegExp Object".split(" "), function(i, name) {
 	class2type[ "[object " + name + "]" ] = name.toLowerCase();
 });
-
-browserMatch = jQuery.uaMatch( userAgent );
-if ( browserMatch.browser ) {
-	jQuery.browser[ browserMatch.browser ] = true;
-	jQuery.browser.version = browserMatch.version;
-}
-
-// Deprecated, use jQuery.browser.webkit instead
-if ( jQuery.browser.webkit ) {
-	jQuery.browser.safari = true;
-}
 
 // IE doesn't match non-breaking spaces with \s
 if ( rnotwhite.test( "\xA0" ) ) {
