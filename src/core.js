@@ -444,7 +444,7 @@ jQuery.extend({
 
 		// If IE event model is used
 		} else if ( document.attachEvent ) {
-			// ensure firing before onload,
+			// ensure firing before onload
 			// maybe late but safe also for iframes
 			document.attachEvent( "onreadystatechange", DOMContentLoaded );
 
@@ -511,7 +511,7 @@ jQuery.extend({
 			return false;
 		}
 
-		// Own properties are enumerated firstly, so to speed up,
+		// Own properties are enumerated firstly, so to speed up
 		// if last one is own, then all properties are own.
 
 		var key;
@@ -754,7 +754,7 @@ jQuery.extend({
 				}
 			}
 
-		// Go through every key on the object,
+		// Go through every key on the object
 		} else {
 			for ( key in elems ) {
 				value = callback( elems[ key ], key, arg );
