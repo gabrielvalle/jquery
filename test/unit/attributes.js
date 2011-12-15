@@ -463,6 +463,51 @@ test("attr('tabindex', value)", function() {
 	equal(element.attr("tabindex"), -1, "set negative tabindex");
 });
 
+test("attr() of cloned node shares no reference to source node (#9777)", function () {
+	expect( 2 );
+
+	// This fixture will be the source of `namesA`, modified with attr()
+	jQuery("#qunit-fixture").append(
+		"<div id='div-9777-a'><button id='button-9777-a' name='a'></button></div>"
+	);
+
+	// This fixture will be the source of `namesB`, modified with setAttribute()
+	jQuery("#qunit-fixture").append(
+		"<div id='div-9777-b'><button id='button-9777-b' name='a'></button></div>"
+	);
+
+	var k = 10,
+	namesA = [],
+	namesB = [],
+	cloneA, cloneB;
+
+	while ( ++k < 16 ) {
+
+		// Clone and modify "name" with attr()
+		cloneA = jQuery("#div-9777-a").children().last().clone( true, true );
+		cloneA.attr( "name", (k).toString(16) );
+		jQuery("#div-9777-a").append( cloneA );
+
+		// Clone and modify "name" with setAttribute()
+		cloneB = jQuery("#div-9777-b").children().last().clone( true, true );
+		cloneB[0].setAttribute( "name", (k).toString(16) );
+		jQuery("#div-9777-b").append( cloneB );
+
+	}
+
+	// Collect all "name" attributes
+	jQuery("#div-9777-a").children().each(function( i, elem ) {
+		namesA.push( jQuery(elem).attr("name") );
+	});
+
+	jQuery("#div-9777-b").children().each(function( i, elem ) {
+		namesB.push( jQuery(elem).attr("name") );
+	});
+
+	equal( namesA.join(""), "abcdef", "Set with attr(), actual name attribute values are as expected" );
+	equal( namesB.join(""), "abcdef", "Set with setAttribute(), actual name attribute values are as expected" );
+});
+
 test("removeAttr(String)", function() {
 	expect(9);
 	var $first;
