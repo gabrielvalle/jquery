@@ -1,3 +1,4 @@
+
 module("manipulation", { teardown: moduleTeardown });
 
 // Ensure that an extended Array prototype doesn't break jQuery
@@ -1676,6 +1677,35 @@ test("Cloned, detached HTML5 elems (#10667,10670)", function() {
 	// Unbind any remaining events
 	$section.unbind( "click" );
 	$clone.unbind( "click" );
+});
+
+test("Clone elems with script children (#11359)", function() {
+	// expect(7);
+
+	var $section = jQuery("<section>").appendTo("#qunit-fixture"),
+			$clone, script, source, code;
+
+  // Create script without jQuery
+	script = document.createElement("script");
+	code = "var sectionScriptAppended = (sectionScriptAppended || 0); sectionScriptAppended++;";
+
+	// Infer test is being run in IE<=8
+	if ( !jQuery.support.opacity ) {
+		script.text = code;
+	} else {
+		source = document.createTextNode( code );
+		script.appendChild( source );
+	}
+
+	$section[ 0 ].appendChild( script );
+
+	equal( sectionScriptAppended, 1, "sectionScriptAppended equals 1" );
+
+	$clone = $section.clone();
+
+	jQuery("#qunit-fixture").append( $clone );
+
+	equal( sectionScriptAppended, 2, "sectionScriptAppended equals 2" );
 });
 
 test("jQuery.fragments cache expectations", function() {
