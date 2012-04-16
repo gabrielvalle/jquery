@@ -1776,3 +1776,13 @@ test("Guard against exceptions when clearing safeChildNodes", function() {
 
 	ok( div && div.jquery, "Created nodes safely, guarded against exceptions on safeChildNodes[ -1 ]" );
 });
+
+test("#8894", function() {
+	expect( 6 );
+	equal( jQuery("<div/>").clone().addClass("test").appendTo("<div/>").end().hasClass("test"), false, "Check jQuery.fn.appendTo after jQuery.clone" );
+	equal( jQuery("<div/>").find("p").end().addClass("test").appendTo("<div/>").end().hasClass("test"), false, "Check jQuery.fn.appendTo after jQuery.fn.find" );
+	equal( jQuery("<div/>").text("test").addClass("test").appendTo("<div/>").end().hasClass("test"), false, "Check jQuery.fn.appendTo after jQuery.fn.text" );
+	equal( jQuery("<bdi/>").clone().addClass("test").appendTo("<div/>").end().hasClass("test"), false, "Check jQuery.fn.appendTo after clone html5 element" );
+	equal( jQuery("<p/>").appendTo("<div/>").length, 1, "Elements created with createElement" );
+	equal( jQuery("<p>test</p>").appendTo("<div/>").length, 1, "Elements created with createDocumentFragment" )
+});
