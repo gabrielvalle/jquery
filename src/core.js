@@ -16,7 +16,6 @@ var
 	core_indexOf = Array.prototype.indexOf,
 	core_toString = Object.prototype.toString,
 	core_hasOwn = Object.prototype.hasOwnProperty,
-	core_trim = String.prototype.trim,
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -61,13 +60,7 @@ var
 
 	// The ready event handler and self cleanup method
 	DOMContentLoaded = function() {
-		if ( document.addEventListener ) {
-			document.removeEventListener( "DOMContentLoaded", DOMContentLoaded, false );
-		} else {
-			// we're here because readyState !== "loading" in oldIE
-			// which is good enough for us to call the dom ready!
-			document.detachEvent( "onreadystatechange", DOMContentLoaded );
-		}
+		document.removeEventListener( "DOMContentLoaded", DOMContentLoaded, false );
 		jQuery.ready();
 	},
 
@@ -380,9 +373,7 @@ jQuery.extend({
 		return jQuery.type(obj) === "function";
 	},
 
-	isArray: Array.isArray || function( obj ) {
-		return jQuery.type(obj) === "array";
-	},
+	isArray: Array.isArray,
 
 	isWindow: function( obj ) {
 		return obj != null && obj == obj.window;
@@ -403,18 +394,6 @@ jQuery.extend({
 		// Because of IE, we also have to check the presence of the constructor property.
 		// Make sure that DOM nodes and window objects don't pass through, as well
 		if ( !obj || jQuery.type(obj) !== "object" || obj.nodeType || jQuery.isWindow( obj ) ) {
-			return false;
-		}
-
-		try {
-			// Not own constructor property must be Object
-			if ( obj.constructor &&
-				!core_hasOwn.call(obj, "constructor") &&
-				!core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
-				return false;
-			}
-		} catch ( e ) {
-			// IE8,9 Will throw exceptions on certain host objects #9897
 			return false;
 		}
 
@@ -467,24 +446,7 @@ jQuery.extend({
 			return null;
 		}
 
-		// Make sure leading/trailing whitespace is removed (IE can't handle it)
-		data = jQuery.trim( data );
-
-		// Attempt to parse using the native JSON parser first
-		if ( window.JSON && window.JSON.parse ) {
-			return window.JSON.parse( data );
-		}
-
-		// Make sure the incoming data is actual JSON
-		// Logic borrowed from http://json.org/json2.js
-		if ( rvalidchars.test( data.replace( rvalidescape, "@" )
-			.replace( rvalidtokens, "]" )
-			.replace( rvalidbraces, "")) ) {
-
-			return ( new Function( "return " + data ) )();
-
-		}
-		jQuery.error( "Invalid JSON: " + data );
+		return JSON.parse( data );
 	},
 
 	// Cross-browser xml parsing
@@ -493,18 +455,10 @@ jQuery.extend({
 		if ( !data || typeof data !== "string" ) {
 			return null;
 		}
-		try {
-			if ( window.DOMParser ) { // Standard
-				tmp = new DOMParser();
-				xml = tmp.parseFromString( data , "text/xml" );
-			} else { // IE
-				xml = new ActiveXObject( "Microsoft.XMLDOM" );
-				xml.async = "false";
-				xml.loadXML( data );
-			}
-		} catch( e ) {
-			xml = undefined;
-		}
+
+		tmp = new DOMParser();
+		xml = tmp.parseFromString( data , "text/xml" );
+
 		if ( !xml || !xml.documentElement || xml.getElementsByTagName( "parsererror" ).length ) {
 			jQuery.error( "Invalid XML: " + data );
 		}
@@ -518,12 +472,7 @@ jQuery.extend({
 	// http://weblogs.java.net/blog/driscoll/archive/2009/09/08/eval-javascript-global-context
 	globalEval: function( data ) {
 		if ( data && core_rnotwhite.test( data ) ) {
-			// We use execScript on Internet Explorer
-			// We use an anonymous function so that context is window
-			// rather than jQuery in Firefox
-			( window.execScript || function( data ) {
-				window[ "eval" ].call( window, data );
-			} )( data );
+			window[ "eval" ].call( window, data );
 		}
 	},
 
@@ -579,19 +528,7 @@ jQuery.extend({
 	},
 
 	// Use native String.trim function wherever possible
-	trim: core_trim ?
-		function( text ) {
-			return text == null ?
-				"" :
-				core_trim.call( text );
-		} :
-
-		// Otherwise use our own trimming functionality
-		function( text ) {
-			return text == null ?
-				"" :
-				text.toString().replace( rtrim, "" );
-		},
+	trim: "".trim,
 
 	// results is for internal usage only
 	makeArray: function( array, results ) {
@@ -803,46 +740,12 @@ jQuery.ready.promise = function( object ) {
 			setTimeout( jQuery.ready, 1 );
 
 		// Standards-based browsers support DOMContentLoaded
-		} else if ( document.addEventListener ) {
+		} else {
 			// Use the handy event callback
 			document.addEventListener( "DOMContentLoaded", DOMContentLoaded, false );
 
 			// A fallback to window.onload, that will always work
 			window.addEventListener( "load", jQuery.ready, false );
-
-		// If IE event model is used
-		} else {
-			// Ensure firing before onload, maybe late but safe also for iframes
-			document.attachEvent( "onreadystatechange", DOMContentLoaded );
-
-			// A fallback to window.onload, that will always work
-			window.attachEvent( "onload", jQuery.ready );
-
-			// If IE and not a frame
-			// continually check to see if the document is ready
-			var top = false;
-
-			try {
-				top = window.frameElement == null && document.documentElement;
-			} catch(e) {}
-
-			if ( top && top.doScroll ) {
-				(function doScrollCheck() {
-					if ( !jQuery.isReady ) {
-
-						try {
-							// Use the trick by Diego Perini
-							// http://javascript.nwbox.com/IEContentLoaded/
-							top.doScroll("left");
-						} catch(e) {
-							return setTimeout( doScrollCheck, 50 );
-						}
-
-						// and execute any waiting functions
-						jQuery.ready();
-					}
-				})();
-			}
 		}
 	}
 	return readyList.promise( object );
