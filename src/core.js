@@ -33,9 +33,6 @@ var
 	core_rnotwhite = /\S/,
 	core_rspace = /\s+/,
 
-	// IE doesn't match non-breaking spaces with \s
-	rtrim = core_rnotwhite.test("\xA0") ? (/^[\s\xA0]+|[\s\xA0]+$/g) : /^\s+|\s+$/g,
-
 	// A simple way to check for HTML strings
 	// Prioritize #id over <tag> to avoid XSS via location.hash (#9521)
 	rhtmlString = /^(?:[^#<]*(<[\w\W]+>)[^>]*$)/,
@@ -61,6 +58,7 @@ var
 	// The ready event handler and self cleanup method
 	DOMContentLoaded = function() {
 		document.removeEventListener( "DOMContentLoaded", DOMContentLoaded, false );
+
 		jQuery.ready();
 	},
 
@@ -397,6 +395,18 @@ jQuery.extend({
 			return false;
 		}
 
+		try {
+			// Not own constructor property must be Object
+			if ( obj.constructor &&
+				!core_hasOwn.call(obj, "constructor") &&
+				!core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
+				return false;
+			}
+		} catch ( e ) {
+			// IE8,9 Will throw exceptions on certain host objects #9897
+			return false;
+		}
+
 		// Own properties are enumerated firstly, so to speed up,
 		// if last one is own, then all properties are own.
 
@@ -446,7 +456,10 @@ jQuery.extend({
 			return null;
 		}
 
-		return JSON.parse( data );
+		// Make sure leading/trailing whitespace is removed (IE can't handle it)
+		data = jQuery.trim( data );
+
+		return window.JSON.parse( data );
 	},
 
 	// Cross-browser xml parsing
@@ -472,7 +485,12 @@ jQuery.extend({
 	// http://weblogs.java.net/blog/driscoll/archive/2009/09/08/eval-javascript-global-context
 	globalEval: function( data ) {
 		if ( data && core_rnotwhite.test( data ) ) {
-			window[ "eval" ].call( window, data );
+			// We use execScript on Internet Explorer
+			// We use an anonymous function so that context is window
+			// rather than jQuery in Firefox
+			( window.execScript || function( data ) {
+				window[ "eval" ].call( window, data );
+			} )( data );
 		}
 	},
 
@@ -528,16 +546,21 @@ jQuery.extend({
 	},
 
 	// Use native String.trim function wherever possible
-	trim: "".trim,
+	trim: function( text ) {
+		return text == null ?
+			"" :
+			"".trim.call( text );
+	},
 
 	// results is for internal usage only
 	makeArray: function( array, results ) {
-		var ret = results || [];
+		var type,
+				ret = results || [];
 
 		if ( array != null ) {
 			// The window, strings (and functions) also have 'length'
 			// Tweaked logic slightly to handle Blackberry 4.7 RegExp issues #6930
-			var type = jQuery.type( array );
+			type = jQuery.type( array );
 
 			if ( array.length == null || type === "string" || type === "function" || type === "regexp" || jQuery.isWindow( array ) ) {
 				core_push.call( ret, array );
@@ -572,11 +595,12 @@ jQuery.extend({
 	},
 
 	merge: function( first, second ) {
-		var i = first.length,
-			j = 0;
+		var l,
+		i = first.length,
+		j = 0;
 
 		if ( typeof second.length === "number" ) {
-			for ( var l = second.length; j < l; j++ ) {
+			for ( l = second.length; j < l; j++ ) {
 				first[ i++ ] = second[ j ];
 			}
 
@@ -592,12 +616,14 @@ jQuery.extend({
 	},
 
 	grep: function( elems, callback, inv ) {
-		var ret = [], retVal;
+		var i, length, retVal,
+		ret = [];
+
 		inv = !!inv;
 
 		// Go through the array, only saving the items
 		// that pass the validator function
-		for ( var i = 0, length = elems.length; i < length; i++ ) {
+		for ( i = 0, length = elems.length; i < length; i++ ) {
 			retVal = !!callback( elems[ i ], i );
 			if ( inv !== retVal ) {
 				ret.push( elems[ i ] );
@@ -609,7 +635,8 @@ jQuery.extend({
 
 	// arg is for internal usage only
 	map: function( elems, callback, arg ) {
-		var value, key, ret = [],
+		var value, key,
+			ret = [],
 			i = 0,
 			length = elems.length,
 			// jquery objects are treated as arrays
@@ -646,8 +673,10 @@ jQuery.extend({
 	// Bind a function to a context, optionally partially applying any
 	// arguments.
 	proxy: function( fn, context ) {
+		var tmp, args, proxy;
+
 		if ( typeof context === "string" ) {
-			var tmp = fn[ context ];
+			tmp = fn[ context ];
 			context = fn;
 			fn = tmp;
 		}
@@ -659,10 +688,10 @@ jQuery.extend({
 		}
 
 		// Simulated bind
-		var args = core_slice.call( arguments, 2 ),
-			proxy = function() {
-				return fn.apply( context, args.concat( core_slice.call( arguments ) ) );
-			};
+		args = core_slice.call( arguments, 2 );
+		proxy = function() {
+			return fn.apply( context, args.concat( core_slice.call( arguments ) ) );
+		};
 
 		// Set the guid of unique handler to the same of original handler, so it can be removed
 		proxy.guid = fn.guid = fn.guid || proxy.guid || jQuery.guid++;
