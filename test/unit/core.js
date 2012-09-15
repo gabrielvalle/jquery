@@ -1342,3 +1342,40 @@ test("jQuery.camelCase()", function() {
 		equal( jQuery.camelCase( key ), val, "Converts: " + key + " => " + val );
 	});
 });
+
+
+test("jQuery(selector might look like html) #12531", function() {
+	expect(11);
+
+	jQuery("#qunit-fixture").append(
+		"<button id='lookalike' data-email='<test.foo@email.com>'>test</button>​"
+	);
+
+	var a, b, c;
+
+	a = jQuery("button[data-email='<test.foo@email.com>']");
+	b = jQuery("button[data-email='<span>foo</span>']");
+	c = jQuery("button[data-email*='test.foo@email.com']");
+
+	equal( jQuery(" <span></span><div></div> ").length, 2, "<span></span><div></div> length is 2" );
+
+	equal( jQuery(" <div/> ").length, 1, "Make sure whitespace is trimmed." );
+	equal( jQuery(" a<div/>b ").length, 1, "Make sure whitespace and other characters are trimmed." );
+
+	equal( a.length, 1, "'a' selection length is 1" );
+	equal( a[0].nodeType, 1, "'a' selection node is nodeType 1" );
+	equal( a[0].nodeName.toLowerCase(),
+		"button", "'a' selection node 'button'" );
+
+	equal( b.length, 0, "'b' selection length is 0" );
+
+
+	equal( c.length, 1, "'c' selection length is 1" );
+	equal( c[0].nodeType, 1, "'c' selection node is nodeType 1" );
+	equal( c[0].nodeName.toLowerCase(),
+		"button", "'c' selection node 'button'" );
+
+	deepEqual( a[0], c[0], "node in selections a and c match" );
+
+	jQuery("#lookalike").remove();
+});

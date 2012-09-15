@@ -44,6 +44,10 @@ var
 	// Prioritize #id over <tag> to avoid XSS via location.hash (#9521)
 	rquickExpr = /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/,
 
+	// Used to detect false positive matches where "html" is found inside
+	// attribute values in selectors
+	rattr = /(\[\s*[_a-z0\-9-:\.\|\\]+\s*(?:[~\|\*\^\$]?=\s*[\"\'][^\"\']*[\"\'])?\s*\])/,
+
 	// Match a standalone tag
 	rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
 
@@ -103,6 +107,13 @@ jQuery.fn = jQuery.prototype = {
 
 			} else {
 				match = rquickExpr.exec( selector );
+			}
+
+			// Attribute values in selectors *might* look like <html>,
+			// in which case they will match the rquickExpr.
+			// Use rattr to detect and nullify false positives. Fixes #12531
+			if ( match && rattr.test( match[0] || selector ) ) {
+				match = null;
 			}
 
 			// Match html or make sure no context is specified for #id
