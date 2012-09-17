@@ -1345,22 +1345,30 @@ test("jQuery.camelCase()", function() {
 
 
 test("jQuery(selector might look like html) #12531", function() {
-	expect(11);
+	expect(16);
 
 	jQuery("#qunit-fixture").append(
 		"<button id='lookalike' data-email='<test.foo@email.com>'>test</button>​"
 	);
 
-	var a, b, c;
+	var a, b, c, d, e;
 
 	a = jQuery("button[data-email='<test.foo@email.com>']");
 	b = jQuery("button[data-email='<span>foo</span>']");
 	c = jQuery("button[data-email*='test.foo@email.com']");
+	d = jQuery("<button name='foo[baz]'></button>");
+	e = jQuery("  a<button name='foo[baz]'></button>  ");
 
 	equal( jQuery(" <span></span><div></div> ").length, 2, "<span></span><div></div> length is 2" );
+	equal( jQuery(" <span></span><div></div> ").length, 2, "<span></span><div></div> length is 2" );
 
-	equal( jQuery(" <div/> ").length, 1, "Make sure whitespace is trimmed." );
-	equal( jQuery(" a<div/>b ").length, 1, "Make sure whitespace and other characters are trimmed." );
+
+	equal( jQuery(" <div/> ").length, 1, "Make sure whitespace is trimmed. Pt 1" );
+	equal( jQuery(" a<div/>b ").length, 1, "Make sure whitespace and other characters are trimmed. Pt 1" );
+
+	equal( jQuery(" <div> ")[0].nodeName.toLowerCase(), "div", "Make sure whitespace is trimmed. Pt 2" );
+	equal( jQuery(" a<div/>b ")[0].nodeName.toLowerCase(), "div", "Make sure whitespace and other characters are trimmed. Pt 2" );
+
 
 	equal( a.length, 1, "'a' selection length is 1" );
 	equal( a[0].nodeType, 1, "'a' selection node is nodeType 1" );
@@ -1376,6 +1384,9 @@ test("jQuery(selector might look like html) #12531", function() {
 		"button", "'c' selection node 'button'" );
 
 	deepEqual( a[0], c[0], "node in selections a and c match" );
+
+	equal( d[0].nodeName.toLowerCase(), "button", "'d' creates a button" );
+	equal( e[0].nodeName.toLowerCase(), "button", "'e' creates a button" );
 
 	jQuery("#lookalike").remove();
 });

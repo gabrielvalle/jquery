@@ -44,9 +44,12 @@ var
 	// Prioritize #id over <tag> to avoid XSS via location.hash (#9521)
 	rquickExpr = /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/,
 
-	// Used to detect false positive matches where "html" is found inside
-	// attribute values in selectors
-	rattr = /(\[\s*[_a-z0\-9-:\.\|\\]+\s*(?:[~\|\*\^\$]?=\s*[\"\'][^\"\']*[\"\'])?\s*\])/,
+	// rattr and rishtml are used to detect false positive matches
+	// where "html" is found inside attribute values in selectors
+	// and false positive matches on html with attributes whose values
+	// include [*], respectively.
+	rattr = /(\[\s*[_a-z0\-9-:.\|\\]+\s*(?:[~|*\^$]?=\s*[\"\'][^\"\']*[\"\'])?\s*\])/,
+	rishtml = /^(<[\w\W]+)(?:[\[\s*\[_a-z0\-9-:\.\|\\]+\s*\])/,
 
 	// Match a standalone tag
 	rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
@@ -111,9 +114,12 @@ jQuery.fn = jQuery.prototype = {
 
 			// Attribute values in selectors *might* look like <html>,
 			// in which case they will match the rquickExpr.
-			// Use rattr to detect and nullify false positives. Fixes #12531
-			if ( match && rattr.test( match[0] || selector ) ) {
-				match = null;
+			// Use rattr to detect and nullify false positives.
+			// Fixes #12531
+			if ( match && rattr.test( match[0] || selector ) &&
+					match[0] !== null && match[1].charAt(0) === "<" ) {
+				// UNLESS rattr itself produces a false positive...
+				match = rishtml.test( match[1] ) ? [ null, match[1], null ] : null;
 			}
 
 			// Match html or make sure no context is specified for #id
