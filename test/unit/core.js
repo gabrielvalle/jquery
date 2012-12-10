@@ -1108,7 +1108,7 @@ test("jQuery.each(Object,Function)", function() {
 });
 
 test("jQuery.makeArray", function(){
-	expect(17);
+	expect(15);
 
 	equal( jQuery.makeArray(jQuery("html>*"))[0].nodeName.toUpperCase(), "HEAD", "Pass makeArray a jQuery object" );
 
@@ -1141,10 +1141,6 @@ test("jQuery.makeArray", function(){
 	equal( jQuery.makeArray(/a/)[0].constructor, RegExp, "Pass makeArray a regex" );
 
 	ok( jQuery.makeArray(document.getElementById("form")).length >= 13, "Pass makeArray a form (treat as elements)" );
-
-	// For #5610
-	deepEqual( jQuery.makeArray({length: "0"}), [], "Make sure object is coerced properly.");
-	deepEqual( jQuery.makeArray({length: "5"}), [], "Make sure object is coerced properly.");
 });
 
 test("jQuery.inArray", function(){
@@ -1196,7 +1192,7 @@ test("jQuery.proxy", function(){
 	// Test old syntax
 	var test4 = { "meth": function( a ){ equal( a, "boom", "Ensure old syntax works." ); } };
 	jQuery.proxy( test4, "meth" )( "boom" );
-	
+
 	// jQuery 1.9 improved currying with `this` object
 	var fn = function() {
 		equal( Array.prototype.join.call( arguments, "," ), "arg1,arg2,arg3", "args passed" );
