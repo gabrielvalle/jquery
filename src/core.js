@@ -648,18 +648,24 @@ jQuery.extend({
 
 	// results is for internal usage only
 	makeArray: function( arr, results ) {
-		var type,
+		var type, isArray,
 			ret = results || [];
 
 		if ( arr != null ) {
-			// The window, strings (and functions) also have 'length'
-			// Tweaked logic slightly to handle Blackberry 4.7 RegExp issues #6930
+			isArray = isArraylike( Object(arr) );
 			type = jQuery.type( arr );
-
-			if ( arr.length == null || type === "string" || type === "function" || type === "regexp" || jQuery.isWindow( arr ) ) {
-				core_push.call( ret, arr );
+// console.log( arr, isArray );
+			if ( isArray ) {
+				jQuery.merge( ret,
+					type === "string" ?
+					[ arr ] : arr
+				);
 			} else {
-				jQuery.merge( ret, arr );
+				core_push.call( ret, arr );
+			}
+
+			if ( arr.length == null || type === "function" ) {
+				core_push.call( ret, arr );
 			}
 		}
 
@@ -917,6 +923,10 @@ jQuery.each("Boolean Number String Function Array Date RegExp Object Error".spli
 function isArraylike( obj ) {
 	var length = obj.length,
 		type = jQuery.type( obj );
+
+	if ( jQuery.isWindow( obj ) ) {
+		return false;
+	}
 
 	return type === "array" || type !== "function" &&
 		( length === 0 ||
