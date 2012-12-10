@@ -892,7 +892,7 @@ test("jQuery.merge()", function() {
 	// After fixing #5527
 	deepEqual( jQuery.merge([], [ null, undefined ]), [ null, undefined ],
 		"Second array including null and undefined values");
-	deepEqual( jQuery.merge({ length:0 }, [ 1, 2 ] ), { length: 2, 0: 1, 1: 2},
+	deepEqual( jQuery.merge({ length: 0 }, [ 1, 2 ] ), { length: 2, 0: 1, 1: 2},
 		"First array like");
 });
 
