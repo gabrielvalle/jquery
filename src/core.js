@@ -648,23 +648,15 @@ jQuery.extend({
 
 	// results is for internal usage only
 	makeArray: function( arr, results ) {
-		var type, isArray,
-			ret = results || [];
+		var ret = results || [];
 
 		if ( arr != null ) {
-			isArray = isArraylike( Object(arr) );
-			type = jQuery.type( arr );
-// console.log( arr, isArray );
-			if ( isArray ) {
+			if ( isArraylike( Object(arr) ) ) {
 				jQuery.merge( ret,
-					type === "string" ?
+					typeof arr === "string" ?
 					[ arr ] : arr
 				);
 			} else {
-				core_push.call( ret, arr );
-			}
-
-			if ( arr.length == null || type === "function" ) {
 				core_push.call( ret, arr );
 			}
 		}
