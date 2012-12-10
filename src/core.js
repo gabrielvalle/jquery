@@ -586,10 +586,7 @@ jQuery.extend({
 		var value,
 			i = 0,
 			length = obj.length,
-			type = jQuery.type( obj ),
-			isArray = type === "array" || type !== "function" &&
-				( length === 0 ||
-				typeof length === "number" && length > 0 && ( length - 1 ) in obj );
+			isArray = isArraylike( obj );
 
 		if ( args ) {
 			if ( isArray ) {
@@ -736,10 +733,7 @@ jQuery.extend({
 		var value,
 			i = 0,
 			length = elems.length,
-			type = jQuery.type( elems ),
-			isArray = type === "array" || type !== "function" &&
-				( length === 0 ||
-				typeof length === "number" && length > 0 && ( length - 1 ) in elems ),
+			isArray = isArraylike( elems ),
 			ret = [];
 
 		// Go through the array, translating each of the items to their
@@ -919,6 +913,15 @@ jQuery.ready.promise = function( obj ) {
 jQuery.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function(i, name) {
 	class2type[ "[object " + name + "]" ] = name.toLowerCase();
 });
+
+function isArraylike( obj ) {
+	var length = obj.length,
+		type = jQuery.type( obj );
+
+	return type === "array" || type !== "function" &&
+		( length === 0 ||
+		typeof length === "number" && length > 0 && ( length - 1 ) in obj );
+}
 
 // All jQuery objects should point back to these
 rootjQuery = jQuery(document);
