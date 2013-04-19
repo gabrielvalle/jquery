@@ -436,9 +436,8 @@ jQuery.extend({
 		for ( ; i < l; i++ ) {
 			elem = elems[ i ];
 
-			if ( jQuery.acceptData( elem ) ) {
-
-				data = data_priv.access( elem );
+			if ( Data.accepts( elem ) ) {
+				data = data_priv.get( elem );
 
 				if ( data ) {
 					for ( type in data.events ) {
@@ -455,8 +454,8 @@ jQuery.extend({
 			// Discard any remaining `private` and `user` data
 			// One day we'll replace the dual arrays with a WeakMap and this won't be an issue.
 			// (Splices the data objects out of the internal cache arrays)
-			data_user.discard( elem );
-			data_priv.discard( elem );
+			// data_user.discard( elem );
+			// data_priv.discard( elem );
 		}
 	},
 
