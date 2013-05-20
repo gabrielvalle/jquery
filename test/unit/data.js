@@ -65,7 +65,10 @@ test( "jQuery.hasData no side effects", function() {
 function dataTests (elem) {
 	var dataObj, internalDataObj;
 
-	equal( jQuery.data(elem, "foo"), undefined, "No data exists initially" );
+	deepEqual( jQuery.data(elem), {}, "No data exists initially" );
+
+	equal( jQuery.data(elem, "foo"), undefined, "Non-existant data is undefined" );
+
 	strictEqual( jQuery.hasData(elem), false, "jQuery.hasData agrees no data exists initially" );
 
 	dataObj = jQuery.data(elem);
@@ -126,7 +129,7 @@ function dataTests (elem) {
 	equal( jQuery._data(elem, "foo"), "foo2", "(sanity check) jQuery.removeData for user data does not remove internal data" );
 }
 
-test("jQuery.data(div)", 25, function() {
+test("jQuery.data(div)", 26, function() {
 	var div = document.createElement("div");
 
 	dataTests(div);
@@ -137,11 +140,11 @@ test("jQuery.data(div)", 25, function() {
 	QUnit.expectJqData(div, "foo");
 });
 
-test("jQuery.data({})", 25, function() {
+test("jQuery.data({})", 26, function() {
 	dataTests({});
 });
 
-test("jQuery.data(window)", 25, function() {
+test("jQuery.data(window)", 26, function() {
 	// remove bound handlers from window object to stop potential false positives caused by fix for #5280 in
 	// transports/xhr.js
 	jQuery(window).off("unload");
@@ -149,21 +152,21 @@ test("jQuery.data(window)", 25, function() {
 	dataTests(window);
 });
 
-test("jQuery.data(document)", 25, function() {
+test("jQuery.data(document)", 26, function() {
 	dataTests(document);
 
 	QUnit.expectJqData(document, "foo");
 });
 
-test("jQuery.data(<embed>)", 25, function() {
+test("jQuery.data(<embed>)", 26, function() {
 	dataTests( document.createElement("embed") );
 });
 
-test("jQuery.data(<applet>)", 25, function() {
+test("jQuery.data(<applet>)", 26, function() {
 	dataTests( document.createElement("applet") );
 });
 
-test("jQuery.data(object/flash)", 25, function() {
+test("jQuery.data(object/flash)", 26, function() {
 	var flash = document.createElement("object");
 	flash.setAttribute( "classid", "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" );
 

@@ -53,6 +53,11 @@ jQuery.event = {
 		if ( !(events = elemData.events) ) {
 			events = elemData.events = {};
 		}
+
+		if ( typeof elemData.count === "undefined" ) {
+			elemData.count = 0;
+		}
+
 		if ( !(eventHandle = elemData.handle) ) {
 			eventHandle = elemData.handle = function( e ) {
 				// Discard the second event of a jQuery.event.trigger() and
@@ -103,6 +108,7 @@ jQuery.event = {
 			if ( !(handlers = events[ type ]) ) {
 				handlers = events[ type ] = [];
 				handlers.delegateCount = 0;
+				elemData.count++;
 
 				// Only use addEventListener if the special events handler returns false
 				if ( !special.setup || special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
@@ -141,7 +147,8 @@ jQuery.event = {
 		var j, origCount, tmp,
 			events, t, handleObj,
 			special, handlers, type, namespaces, origType,
-			elemData = data_priv.hasData( elem ) && data_priv.get( elem );
+			key = elem[ data_priv.expando ],
+			elemData = data_priv.cache[ key ];
 
 		if ( !elemData || !(events = elemData.events) ) {
 			return;
@@ -196,13 +203,15 @@ jQuery.event = {
 				}
 
 				delete events[ type ];
+				elemData.count--;
 			}
 		}
 
 		// Remove the expando if it's no longer used
 		if ( jQuery.isEmptyObject( events ) ) {
+			delete elemData.count;
 			delete elemData.handle;
-			data_priv.remove( elem, "events" );
+			delete elemData.events;
 		}
 	},
 

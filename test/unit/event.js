@@ -2680,3 +2680,99 @@ test( "String.prototype.namespace does not cause trigger() to throw (#13360)", f
 	equal( errored, false, "trigger() did not throw exception" );
 	delete String.prototype.namespace;
 });
+
+test( "Event types are counted", function() {
+	expect( 4 );
+	var elem = document.createElement("div"),
+		fixture = jQuery( elem );
+
+	function handler() {}
+
+	fixture.on( "click", handler );
+	fixture.on( "click change", handler );
+	fixture.on( "click change mouseover", handler );
+	equal( jQuery._data( elem, "count" ), 3, "elem has 3 events counted" );
+
+	fixture.off( "mouseover", handler );
+	equal( jQuery._data( elem, "count" ), 2, "elem has 2 events counted" );
+
+	fixture.off( "change", handler );
+	equal( jQuery._data( elem, "count" ), 1, "elem has 1 event counted" );
+
+	fixture.off( "click", handler );
+	equal( jQuery._data( elem, "count" ), undefined, "when elem has 0 events, 'count' is removed" );
+});
+
+test( "Event types are counted on clones", function() {
+	expect( 4 );
+	var clone,
+		elem = document.createElement("div"),
+		fixture = jQuery( elem );
+
+	function handler() {}
+
+	fixture.on( "click", handler );
+	fixture.on( "click change", handler );
+	fixture.on( "click change mouseover", handler );
+	equal( jQuery._data( elem, "count" ), 3, "elem has 3 events counted" );
+
+	clone = fixture.clone( true, true );
+	equal( jQuery._data( clone[0], "count" ), 3, "clone has 3 events counted" );
+
+	fixture.off( "mouseover change click", handler );
+	equal( jQuery._data( elem, "count" ), undefined, "when elem has 0 events, 'count' is removed" );
+
+	equal( jQuery._data( clone[0], "count" ), 3, "clone still has 3 events counted" );
+});
+
+test( "Event types are counted for special events", function() {
+	expect( 2 );
+	var elem = document.createElement("div"),
+		fixture = jQuery( elem );
+
+	function handler() {}
+
+	jQuery.event.special["test"] = {
+		_default: function() {},
+		setup: function() {},
+		teardown: function() {},
+		add: function() {},
+		remove: function() {}
+	};
+
+	fixture.on( "test", handler );
+	equal( jQuery._data( elem, "count" ), 1, "elem has 1 event counted" );
+
+
+	fixture.off( "test", handler );
+	equal( jQuery._data( elem, "count" ), undefined, "when elem has 0 events, 'count' is removed" );
+});
+
+test( "Event types are counted for custom events", function() {
+	expect( 2 );
+	var elem = document.createElement("div"),
+		fixture = jQuery( elem );
+
+	function handler() {}
+
+	fixture.on( "test", handler );
+	equal( jQuery._data( elem, "count" ), 1, "elem has 1 event counted" );
+
+
+	fixture.off( "test", handler );
+	equal( jQuery._data( elem, "count" ), undefined, "when elem has 0 events, 'count' is removed" );
+});
+
+test( "jQuery.event.remove clears private events data", function() {
+	expect( 2 );
+	var elem = document.createElement("div"),
+		fixture = jQuery( elem );
+
+	function handler() {}
+
+	fixture.on( "test", handler );
+	equal( jQuery._data( elem, "count" ), 1, "elem has 1 event counted" );
+
+	fixture.off( "test", handler );
+	deepEqual( jQuery._data(elem), {}, "elem has no private data once all events are removed" );
+});

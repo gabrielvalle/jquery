@@ -80,7 +80,7 @@ jQuery.fn.extend({
 
 		for ( ; (elem = elems[i]) != null; i++ ) {
 			if ( !keepData && elem.nodeType === 1 ) {
-				jQuery.cleanData( getAll( elem ) );
+				jQuery.cleanData( getAll( elem ), true );
 			}
 
 			if ( elem.parentNode ) {
@@ -102,7 +102,7 @@ jQuery.fn.extend({
 			if ( elem.nodeType === 1 ) {
 
 				// Prevent memory leaks
-				jQuery.cleanData( getAll( elem, false ) );
+				jQuery.cleanData( getAll( elem, false ), true );
 
 				// Remove any remaining nodes
 				elem.textContent = "";
@@ -143,7 +143,7 @@ jQuery.fn.extend({
 
 						// Remove element nodes and prevent memory leaks
 						if ( elem.nodeType === 1 ) {
-							jQuery.cleanData( getAll( elem, false ) );
+							jQuery.cleanData( getAll( elem, false ), true );
 							elem.innerHTML = value;
 						}
 					}
@@ -432,36 +432,33 @@ jQuery.extend({
 		return fragment;
 	},
 
-	cleanData: function( elems ) {
-		var data, elem, events, type, key, j,
+	cleanData: function( elems, accepts ) {
+		var data, elem, type, key,
 			special = jQuery.event.special,
 			i = 0;
 
 		for ( ; (elem = elems[ i ]) !== undefined; i++ ) {
-			if ( Data.accepts( elem ) ) {
+			if ( accepts || Data.accepts( elem ) ) {
 				key = elem[ data_priv.expando ];
+				data = key ? data_priv.cache[ key ] : null;
 
-				if ( key && (data = data_priv.cache[ key ]) ) {
-					events = Object.keys( data.events || {} );
-					if ( events.length ) {
-						for ( j = 0; (type = events[j]) !== undefined; j++ ) {
-							if ( special[ type ] ) {
-								jQuery.event.remove( elem, type );
+				if ( data !== null && data.count ) {
+					for ( type in data.events ) {
+						if ( special[ type ] ) {
+							jQuery.event.remove( elem, type );
 
-							// This is a shortcut to avoid jQuery.event.remove's overhead
-							} else {
-								jQuery.removeEvent( elem, type, data.handle );
-							}
+						// This is a shortcut to avoid jQuery.event.remove's overhead
+						} else {
+							jQuery.removeEvent( elem, type, data.handle );
 						}
 					}
-					if ( data_priv.cache[ key ] ) {
-						// Discard any remaining `private` data
-						delete data_priv.cache[ key ];
-					}
 				}
+				// Discard any remaining `private` data
+				delete data_priv.cache[ key ];
+
+				// Discard any remaining `user` data
+				delete data_user.cache[ elem[ data_user.expando ] ];
 			}
-			// Discard any remaining `user` data
-			delete data_user.cache[ elem[ data_user.expando ] ];
 		}
 	},
 
@@ -532,6 +529,7 @@ function cloneCopyEvent( src, dest ) {
 
 		if ( events ) {
 			delete pdataCur.handle;
+			pdataCur.count = 0;
 			pdataCur.events = {};
 
 			for ( type in events ) {
