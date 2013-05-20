@@ -147,8 +147,7 @@ jQuery.event = {
 		var j, origCount, tmp,
 			events, t, handleObj,
 			special, handlers, type, namespaces, origType,
-			key = elem[ data_priv.expando ],
-			elemData = data_priv.cache[ key ];
+			elemData = data_priv.get( elem );
 
 		if ( !elemData || !(events = elemData.events) ) {
 			return;

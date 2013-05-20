@@ -80,7 +80,7 @@ jQuery.fn.extend({
 
 		for ( ; (elem = elems[i]) != null; i++ ) {
 			if ( !keepData && elem.nodeType === 1 ) {
-				jQuery.cleanData( getAll( elem ), true );
+				jQuery.cleanData( getAll( elem ) );
 			}
 
 			if ( elem.parentNode ) {
@@ -102,7 +102,7 @@ jQuery.fn.extend({
 			if ( elem.nodeType === 1 ) {
 
 				// Prevent memory leaks
-				jQuery.cleanData( getAll( elem, false ), true );
+				jQuery.cleanData( getAll( elem, false ) );
 
 				// Remove any remaining nodes
 				elem.textContent = "";
@@ -143,7 +143,7 @@ jQuery.fn.extend({
 
 						// Remove element nodes and prevent memory leaks
 						if ( elem.nodeType === 1 ) {
-							jQuery.cleanData( getAll( elem, false ), true );
+							jQuery.cleanData( getAll( elem, false ) );
 							elem.innerHTML = value;
 						}
 					}
@@ -432,17 +432,17 @@ jQuery.extend({
 		return fragment;
 	},
 
-	cleanData: function( elems, accepts ) {
-		var data, elem, type, key,
+	cleanData: function( elems ) {
+		var cache, data, elem, type,
 			special = jQuery.event.special,
 			i = 0;
 
 		for ( ; (elem = elems[ i ]) !== undefined; i++ ) {
-			if ( accepts || Data.accepts( elem ) ) {
-				key = elem[ data_priv.expando ];
-				data = key ? data_priv.cache[ key ] : null;
+			if ( Data.accepts( elem ) ) {
+				cache = elem[ Data.expando ];
+				data = cache && cache.p;
 
-				if ( data !== null && data.count ) {
+				if ( data && data.count ) {
 					for ( type in data.events ) {
 						if ( special[ type ] ) {
 							jQuery.event.remove( elem, type );
@@ -453,11 +453,10 @@ jQuery.extend({
 						}
 					}
 				}
-				// Discard any remaining `private` data
-				delete data_priv.cache[ key ];
 
-				// Discard any remaining `user` data
-				delete data_user.cache[ elem[ data_user.expando ] ];
+				if (cache) {
+					delete elem[ Data.expando ];
+				}
 			}
 		}
 	},
@@ -523,7 +522,7 @@ function cloneCopyEvent( src, dest ) {
 
 	// 1. Copy private data: events, handlers, etc.
 	if ( data_priv.hasData( src ) ) {
-		pdataOld = data_priv.access( src );
+		pdataOld = data_priv.get( src );
 		pdataCur = data_priv.set( dest, pdataOld );
 		events = pdataOld.events;
 
@@ -542,7 +541,7 @@ function cloneCopyEvent( src, dest ) {
 
 	// 2. Copy user data
 	if ( data_user.hasData( src ) ) {
-		udataOld = data_user.access( src );
+		udataOld = data_user.get( src );
 		udataCur = jQuery.extend( {}, udataOld );
 
 		data_user.set( dest, udataCur );

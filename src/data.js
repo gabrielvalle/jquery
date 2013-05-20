@@ -11,22 +11,14 @@
 */
 var data_user, data_priv,
 	rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
-	rmultiDash = /([A-Z])/g;
+	rmultiDash = /([A-Z])/g,
+	frozen = Object.freeze({});
 
-function Data() {
-	// Support: Android < 4,
-	// Old WebKit does not have Object.preventExtensions/freeze method,
-	// return new empty object instead with no [[set]] accessor
-	Object.defineProperty( this.cache = {}, 0, {
-		get: function() {
-			return {};
-		}
-	});
-
-	this.expando = jQuery.expando + Math.random();
+function Data(key) {
+	this.key = key;
 }
 
-Data.uid = 1;
+Data.expando = jQuery.expando + Math.random();
 
 Data.accepts = function( owner ) {
 	// Accepts only:
@@ -40,49 +32,50 @@ Data.accepts = function( owner ) {
 };
 
 Data.prototype = {
-	key: function( owner ) {
+	cache: function( owner ) {
 		// We can accept data for non-element nodes in modern browsers,
 		// but we should not, see #8335.
 		// Always return the key for a frozen object.
 		if ( !Data.accepts( owner ) ) {
-			return 0;
+			return frozen;
 		}
 
-		var descriptor = {},
-			// Check if the owner object already has a cache key
-			unlock = owner[ this.expando ];
+		// They owner object may already already have a cache
+		var cache = owner[ Data.expando ];
 
 		// If not, create one
-		if ( !unlock ) {
-			unlock = Data.uid++;
-
-			// Secure it in a non-enumerable, non-writable property
+		if ( !cache ) {
+			// Define it in a non-enumerable, non-writable property
+			// Must be configurable to allow delete operation
+			// See: ES5.1, 8.6.1 Table 5
 			try {
-				descriptor[ this.expando ] = { value: unlock };
-				Object.defineProperties( owner, descriptor );
+				Object.defineProperties( owner, Data.expando, {
+					value: {},
+					configurable: true
+				});
 
 			// Support: Android < 4
 			// Fallback to a less secure definition
 			} catch ( e ) {
-				descriptor[ this.expando ] = unlock;
-				jQuery.extend( owner, descriptor );
+				owner[ Data.expando ] = {};
 			}
+
+			cache = owner[ Data.expando ];
 		}
 
-		// Ensure the cache object
-		if ( !this.cache[ unlock ] ) {
-			this.cache[ unlock ] = {};
+		// Ensure the cache object for this instance
+		if ( !cache[ this.key ] ) {
+			cache[ this.key ] = {};
 		}
 
-		return unlock;
+		return cache[ this.key ];
 	},
 	set: function( owner, data, value ) {
 		var prop,
 			// There may be an unlock assigned to this node,
 			// if there is no entry for this "owner", create one inline
 			// and set the unlock as though an owner entry had always existed
-			unlock = this.key( owner ),
-			cache = this.cache[ unlock ];
+			cache = this.cache( owner );
 
 		// Handle: [ owner, key, value ] args
 		if ( typeof data === "string" ) {
@@ -92,7 +85,7 @@ Data.prototype = {
 		} else {
 			// Fresh assignments by object are shallow copied
 			if ( jQuery.isEmptyObject( cache ) ) {
-				jQuery.extend( this.cache[ unlock ], data );
+				jQuery.extend( cache, data );
 			// Otherwise, copy the properties one-by-one to the cache object
 			} else {
 				for ( prop in data ) {
@@ -100,14 +93,14 @@ Data.prototype = {
 				}
 			}
 		}
-		return cache;
+		return this.cache( owner );
 	},
 	get: function( owner, key ) {
 		// Either a valid cache is found, or will be created.
 		// New caches will be created and the unlock returned,
 		// allowing direct access to the newly created
 		// empty data object. A valid owner object must be provided.
-		var cache = this.cache[ this.key( owner ) ];
+		var cache = this.cache( owner );
 
 		return key === undefined ?
 			cache : cache[ key ];
@@ -143,11 +136,10 @@ Data.prototype = {
 	},
 	remove: function( owner, key ) {
 		var i, name, camel,
-			unlock = this.key( owner ),
-			cache = this.cache[ unlock ];
+			cache = this.cache( owner );
 
 		if ( key === undefined ) {
-			this.cache[ unlock ] = {};
+			owner[ Data.expando ][ this.key ] = {};
 
 		} else {
 			// Support array or space separated string of keys
@@ -180,20 +172,19 @@ Data.prototype = {
 		}
 	},
 	hasData: function( owner ) {
+		var cache = owner[ Data.expando ];
 		return !jQuery.isEmptyObject(
-			this.cache[ owner[ this.expando ] ] || {}
+			cache ? cache[ this.key ] : {}
 		);
 	},
 	discard: function( owner ) {
-		if ( owner[ this.expando ] ) {
-			delete this.cache[ owner[ this.expando ] ];
-		}
+		delete owner[ Data.expando ][ this.key ];
 	}
 };
 
 // These may be used throughout the jQuery core codebase
-data_user = new Data();
-data_priv = new Data();
+data_user = new Data("u");
+data_priv = new Data("p");
 
 
 jQuery.extend({
