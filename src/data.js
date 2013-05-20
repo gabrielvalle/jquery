@@ -200,7 +200,7 @@ jQuery.extend({
 	acceptData: Data.accepts,
 
 	hasData: function( elem ) {
-		return data_user.hasData( elem ) || data_priv.hasData( elem );
+		return data_user.hasData( elem );
 	},
 
 	data: function( elem, name, data ) {
